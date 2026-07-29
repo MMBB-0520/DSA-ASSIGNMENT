@@ -3,18 +3,18 @@ package boundary;
 
 import control.WalkInRegistrationControl;
 import entity.Booking;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 
 public class WalkInRegistrationUI {
 
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter DATETIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final String TABLE_LINE =
-            "----------------------------------------------------------------------------------------------------";
-    private static final String TABLE_HEADER_FMT = "%-10s %-15s %-10s %-7s %-12s %-7s %-10s %-10s%n";
-    private static final String TABLE_ROW_FMT    = "%-10s %-15s %-10s %-7d %-12s %-7d RM%-8.2f %-10s%n";
+            "----------------------------------------------------------------------------------------------------------------------";
+    private static final String TABLE_HEADER_FMT = "%-10s %-15s %-10s %-7s %-17s %-17s %-7s %-10s %-10s%n";
+    private static final String TABLE_ROW_FMT    = "%-10s %-15s %-10s %-7d %-17s %-17s %-7d RM%-8.2f %-10s%n";
 
     private WalkInRegistrationControl control;
     private Scanner sc;
@@ -31,9 +31,11 @@ public class WalkInRegistrationUI {
             System.out.println("1. Register new booking");
             System.out.println("2. Process next booking (assign room)");
             System.out.println("3. Cancel a booking");
-            System.out.println("4. View current queue");
-            System.out.println("5. Report: Bookings sorted by room type");
-            System.out.println("6. Report: Filter bookings by room type");
+            System.out.println("4. Check-out a booking (mark room dirty)");
+            System.out.println("5. View current queue (Available)");
+            System.out.println("6. View booked / checked-out rooms");
+            System.out.println("7. Report: Bookings sorted by room type");
+            System.out.println("8. Report: Filter bookings by room type");
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
             choice = readMenuChoice();
@@ -42,9 +44,11 @@ public class WalkInRegistrationUI {
                 case 1 -> registerBooking();
                 case 2 -> processNextBooking();
                 case 3 -> cancelBooking();
-                case 4 -> viewQueue();
-                case 5 -> showSortedReport();
-                case 6 -> showFilterReport();
+                case 4 -> checkOutBooking();
+                case 5 -> viewQueue();
+                case 6 -> viewProcessedLog();
+                case 7 -> showSortedReport();
+                case 8 -> showFilterReport();
                 case 0 -> System.out.println("Exiting...");
                 default -> System.out.println("Invalid choice.");
             }
@@ -55,7 +59,7 @@ public class WalkInRegistrationUI {
         try {
             return Integer.parseInt(sc.nextLine().trim());
         } catch (NumberFormatException e) {
-            return -1; // falls into "Invalid choice" in the switch
+            return -1;
         }
     }
 
@@ -82,14 +86,22 @@ public class WalkInRegistrationUI {
 
         String roomType = promptRoomType();
         int numGuests = promptIntInRange("Number of Guests (1-6): ", 1, 6);
-        LocalDate checkInDate = promptFutureDate("Check-In Date (yyyy-MM-dd, today or later): ");
-        int nights = promptIntInRange("Number of Nights (1-30): ", 1, 30);
 
-        Booking booking = control.registerBooking(name, contact, roomType, numGuests, checkInDate, nights);
+        LocalDateTime checkIn = promptDateTime("Check-In Date & Time (yyyy-MM-dd HH:mm, now or later): ", null);
+        LocalDateTime checkOut;
+        while (true) {
+            checkOut = promptDateTime("Check-Out Date & Time (yyyy-MM-dd HH:mm): ", null);
+            if (!checkOut.isAfter(checkIn)) {
+                System.out.println("Check-out must be after check-in.");
+                continue;
+            }
+            break;
+        }
+
+        Booking booking = control.registerBooking(name, contact, roomType, numGuests, checkIn, checkOut);
         System.out.printf("Registered: %s (Total: RM%.2f)%n", booking, booking.getTotalPrice());
     }
 
-    // Forces the user to pick from a fixed menu instead of free-typing a room type.
     private String promptRoomType() {
         String[] roomTypes = WalkInRegistrationControl.ROOM_TYPES;
         while (true) {
@@ -106,7 +118,7 @@ public class WalkInRegistrationUI {
                     return roomTypes[choice - 1];
                 }
             } catch (NumberFormatException e) {
-                // fall through to error message below
+                // fall through
             }
             System.out.println("Invalid choice - enter a number from the list.");
         }
@@ -128,19 +140,20 @@ public class WalkInRegistrationUI {
         }
     }
 
-    private LocalDate promptFutureDate(String prompt) {
+    // requireAfter: if not null, the entered value must be after it (used for check-in vs "now")
+    private LocalDateTime promptDateTime(String prompt, LocalDateTime requireAfter) {
         while (true) {
             System.out.print(prompt);
             String input = sc.nextLine().trim();
             try {
-                LocalDate date = LocalDate.parse(input, DATE_FORMAT);
-                if (date.isBefore(LocalDate.now())) {
-                    System.out.println("Check-in date cannot be in the past.");
+                LocalDateTime dt = LocalDateTime.parse(input, DATETIME_FORMAT);
+                if (dt.isBefore(LocalDateTime.now().withSecond(0).withNano(0))) {
+                    System.out.println("Date/time cannot be in the past.");
                     continue;
                 }
-                return date;
+                return dt;
             } catch (DateTimeParseException e) {
-                System.out.println("Invalid format - use yyyy-MM-dd, e.g. 2026-08-15.");
+                System.out.println("Invalid format - use yyyy-MM-dd HH:mm, e.g. 2026-08-15 14:00.");
             }
         }
     }
@@ -151,7 +164,7 @@ public class WalkInRegistrationUI {
             return;
         }
         Booking next = control.processNextBooking();
-        System.out.println("Processed and assigned: " + next);
+        System.out.println("Processed and assigned (now BOOKED): " + next);
     }
 
     private void cancelBooking() {
@@ -159,8 +172,6 @@ public class WalkInRegistrationUI {
             System.out.println("Queue is empty - nothing to cancel.");
             return;
         }
-
-        // Show the valid IDs first so the user picks from what actually exists.
         viewQueue();
 
         String id;
@@ -180,6 +191,30 @@ public class WalkInRegistrationUI {
         System.out.println("Cancelled: " + cancelled);
     }
 
+    private void checkOutBooking() {
+        if (control.getProcessedLogSize() == 0) {
+            System.out.println("No booked rooms to check out.");
+            return;
+        }
+        viewProcessedLog();
+
+        String id;
+        while (true) {
+            System.out.print("Booking ID to check out (or 0 to go back): ");
+            id = sc.nextLine().trim();
+            if (id.equals("0")) {
+                return;
+            }
+            if (control.processedBookingExists(id)) {
+                break;
+            }
+            System.out.println("No BOOKED room with that ID found. Try again.");
+        }
+
+        Booking checkedOut = control.checkOutBooking(id);
+        System.out.println("Checked out - room now DIRTY: " + checkedOut);
+    }
+
     private void viewQueue() {
         Booking[] queue = control.viewQueue();
         if (queue.length == 0) {
@@ -191,9 +226,19 @@ public class WalkInRegistrationUI {
         System.out.printf("Total potential revenue: RM%.2f%n", control.getTotalQueueRevenue());
     }
 
+    private void viewProcessedLog() {
+        Booking[] log = control.viewProcessedLog();
+        if (log.length == 0) {
+            System.out.println("No booked or checked-out rooms yet.");
+            return;
+        }
+        System.out.println("Booked / checked-out rooms:");
+        printTable(log);
+    }
+
     private void showSortedReport() {
         Booking[] sorted = control.getBookingsSortedByRoomType();
-        System.out.println("--- Bookings Sorted by Room Type, then Check-In Date ---");
+        System.out.println("--- Bookings Sorted by Room Type, then Check-In Time ---");
         if (sorted.length == 0) {
             System.out.println("No bookings to show.");
             return;
@@ -219,13 +264,14 @@ public class WalkInRegistrationUI {
 
     private void printTable(Booking[] bookings) {
         System.out.println(TABLE_LINE);
-        System.out.printf(TABLE_HEADER_FMT, "BookingID", "Guest", "RoomType", "Guests", "CheckIn", "Nights", "Total", "Status");
+        System.out.printf(TABLE_HEADER_FMT, "BookingID", "Guest", "RoomType", "Guests", "CheckIn", "CheckOut", "Nights", "Total", "Status");
         System.out.println(TABLE_LINE);
         for (Booking b : bookings) {
             System.out.printf(TABLE_ROW_FMT,
-                    b.getBookingId(), b.getGuest().getName(), b.getRoomType(),
-                    b.getNumGuests(), b.getCheckInDate(), b.getNights(),
-                    b.getTotalPrice(), b.getStatus());
+                    b.getBookingId(), b.getGuest().getName(), b.getRoomType(), b.getNumGuests(),
+                    b.getCheckInDateTime().toString().replace("T", " "),
+                    b.getCheckOutDateTime().toString().replace("T", " "),
+                    b.getNights(), b.getTotalPrice(), b.getStatus());
         }
         System.out.println(TABLE_LINE);
     }
