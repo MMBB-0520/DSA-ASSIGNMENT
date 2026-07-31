@@ -2,46 +2,122 @@
 package control;
 
 import entity.Booking;
-import entity.Guest;
+import entity.Room;
+import entity.Staff;
 import entity.MyQueue;
 import java.time.LocalDateTime;
 
-public class WalkInRegistrationControl {
+import data.RoomData;
+import data.StaffData;
 
-    public static final String[] ROOM_TYPES = {"Standard", "Deluxe", "Suite"};
-    private static final double[] ROOM_PRICES = {150.00, 250.00, 400.00}; // RM per night
+public class WalkInRegistrationControl {
 
     private MyQueue<Booking> bookingQueue;   // waiting to be assigned a room (status AVAILABLE)
     private MyQueue<Booking> processedLog;   // already assigned rooms (status BOOKED or DIRTY)
     private int bookingCounter;
-    private int guestCounter;
+
+    private DataRepository dataRepository;
+    private Room[] rooms;
+    private Staff[] staffList;
 
     public WalkInRegistrationControl() {
         bookingQueue = new MyQueue<>();
         processedLog = new MyQueue<>();
-        bookingCounter = 1;
-        guestCounter = 1;
+        dataRepository = new DataRepository();
+        loadData();
     }
 
-    public double getPriceForRoomType(String roomType) {
-        for (int i = 0; i < ROOM_TYPES.length; i++) {
-            if (ROOM_TYPES[i].equalsIgnoreCase(roomType)) {
-                return ROOM_PRICES[i];
+    private void loadData() {
+        // Load Staff
+        Staff[] loadedStaff = dataRepository.loadStaff();
+        if (loadedStaff == null || loadedStaff.length == 0) {
+            staffList = StaffData.STAFF;
+            dataRepository.saveStaff(staffList);
+        } else {
+            staffList = loadedStaff;
+        }
+
+        // Load Rooms
+        Room[] loadedRooms = dataRepository.loadRooms();
+        if (loadedRooms == null || loadedRooms.length == 0) {
+            rooms = RoomData.ROOMS;
+            dataRepository.saveRooms(rooms);
+        } else {
+            rooms = loadedRooms;
+        }
+
+        // Load Bookings
+        Booking[] allBookings = dataRepository.loadBookings();
+        int maxId = 0;
+        for (Booking b : allBookings) {
+            // Re-link with local objects to avoid detached instances
+            if (b.getStaff() != null) {
+                b.setStaff(getStaffById(b.getStaff().getStaffId()));
+            }
+            if (b.getRoomId() != null) {
+                b.setRoom(getRoomById(b.getRoomId()));
+            }
+
+            if (Booking.STATUS_AVAILABLE.equals(b.getBookingStatus())) {
+                bookingQueue.enqueue(b);
+            } else {
+                processedLog.enqueue(b);
+            }
+
+            try {
+                int idNum = Integer.parseInt(b.getBookingId().replace("BK", ""));
+                if (idNum > maxId)
+                    maxId = idNum;
+            } catch (Exception e) {
             }
         }
-        return -1;
+        bookingCounter = maxId + 1;
+    }
+
+    public void saveData() {
+        dataRepository.saveBookings(viewQueue(), viewProcessedLog());
+        dataRepository.saveRooms(rooms);
+    }
+
+    public Staff getStaffById(String id) {
+        for (Staff s : staffList) {
+            if (s.getStaffId().equals(id))
+                return s;
+        }
+        return null;
+    }
+
+    public Staff authenticate(String staffId, String password) {
+        for (Staff s : staffList) {
+            if (s.getStaffId().equals(staffId) && s.getPassword().equals(password)) {
+                return s;
+            }
+        }
+        return null;
+    }
+
+    public Room getRoomById(String id) {
+        for (Room r : rooms) {
+            if (r.getRoomId().equals(id))
+                return r;
+        }
+        return null;
+    }
+
+    public Room[] getRooms() {
+        return rooms;
     }
 
     // Register a new walk-in / standard booking - joins the back of the queue.
     // Status starts as AVAILABLE (waiting for a room to be assigned).
-    public Booking registerBooking(String name, String contactNumber, String roomType, int numGuests,
-                                    LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime) {
-        Guest guest = new Guest(generateGuestId(), name, contactNumber);
+    public Booking registerBooking(String guestName, String icPassport, String contact, Staff staff, Room room,
+            int numGuests, LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime) {
         String bookingId = generateBookingId();
-        double price = getPriceForRoomType(roomType);
-        Booking booking = new Booking(bookingId, guest, roomType, price, numGuests,
+        Booking booking = new Booking(bookingId, guestName, icPassport, contact, staff, room, numGuests,
                 checkInDateTime, checkOutDateTime, LocalDateTime.now());
+        
         bookingQueue.enqueue(booking);
+        saveData();
         return booking;
     }
 
@@ -59,8 +135,13 @@ public class WalkInRegistrationControl {
     public Booking processNextBooking() {
         Booking next = bookingQueue.dequeue();
         if (next != null) {
-            next.setStatus(Booking.STATUS_BOOKED);
+            next.setBookingStatus(Booking.STATUS_BOOKED);
+            if (next.getRoom() != null) {
+                next.getRoom().setStatus(Room.STATUS_OCCUPIED);
+                next.getRoom().setAvailableFrom(next.getCheckOutDateTime());
+            }
             processedLog.enqueue(next);
+            saveData();
         }
         return next;
     }
@@ -69,7 +150,9 @@ public class WalkInRegistrationControl {
     public Booking cancelBooking(String bookingId) {
         Booking removed = bookingQueue.removeById(bookingId);
         if (removed != null) {
-            removed.setStatus(Booking.STATUS_CANCELLED);
+            removed.setBookingStatus(Booking.STATUS_CANCELLED);
+            processedLog.enqueue(removed); // optional: keep log of cancelled bookings
+            saveData();
         }
         return removed;
     }
@@ -78,8 +161,12 @@ public class WalkInRegistrationControl {
     public Booking checkOutBooking(String bookingId) {
         for (int i = 0; i < processedLog.getSize(); i++) {
             Booking b = processedLog.get(i);
-            if (b.getBookingId().equalsIgnoreCase(bookingId) && b.getStatus().equals(Booking.STATUS_BOOKED)) {
-                b.setStatus(Booking.STATUS_DIRTY);
+            if (b.getBookingId().equalsIgnoreCase(bookingId) && b.getBookingStatus().equals(Booking.STATUS_BOOKED)) {
+                b.setBookingStatus(Booking.STATUS_DIRTY);
+                if (b.getRoom() != null) {
+                    b.getRoom().setStatus(Room.STATUS_DIRTY);
+                }
+                saveData();
                 return b;
             }
         }
@@ -89,7 +176,7 @@ public class WalkInRegistrationControl {
     public boolean processedBookingExists(String bookingId) {
         for (int i = 0; i < processedLog.getSize(); i++) {
             if (processedLog.get(i).getBookingId().equalsIgnoreCase(bookingId)
-                    && processedLog.get(i).getStatus().equals(Booking.STATUS_BOOKED)) {
+                    && processedLog.get(i).getBookingStatus().equals(Booking.STATUS_BOOKED)) {
                 return true;
             }
         }
@@ -148,7 +235,7 @@ public class WalkInRegistrationControl {
     }
 
     private int compareByRoomTypeThenCheckIn(Booking a, Booking b) {
-        int roomCompare = a.getRoomType().compareTo(b.getRoomType());
+        int roomCompare = a.getRoom().getType().compareTo(b.getRoom().getType());
         if (roomCompare != 0) {
             return roomCompare;
         }
@@ -161,7 +248,7 @@ public class WalkInRegistrationControl {
         Booking[] temp = new Booking[all.length];
         int count = 0;
         for (Booking b : all) {
-            if (b.getRoomType().equalsIgnoreCase(roomType)) {
+            if (b.getRoom().getType().equalsIgnoreCase(roomType)) {
                 temp[count++] = b;
             }
         }
@@ -172,9 +259,5 @@ public class WalkInRegistrationControl {
 
     private String generateBookingId() {
         return String.format("BK%05d", bookingCounter++);
-    }
-
-    private String generateGuestId() {
-        return String.format("G%04d", guestCounter++);
     }
 }
