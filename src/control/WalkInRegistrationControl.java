@@ -19,7 +19,10 @@ public class WalkInRegistrationControl {
     private MyQueue<Booking> bookingQueue;
     private MyQueue<Booking> processedLog;
     private int bookingCounter;
-    private int guestCounter;
+
+    private DataRepository dataRepository;
+    private Room[] rooms;
+    private Staff[] staffList;
 
     public WalkInRegistrationControl() {
         bookingQueue = new MyQueue<>();
@@ -44,10 +47,11 @@ public class WalkInRegistrationControl {
                                     LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime) {
         Guest guest = new Guest(generateGuestId(), name, contactNumber);
         String bookingId = generateBookingId();
-        double price = getPriceForRoomType(roomType);
-        Booking booking = new Booking(bookingId, guest, roomType, price, numGuests,
+        Booking booking = new Booking(bookingId, guestName, icPassport, contact, staff, room, numGuests,
                 checkInDateTime, checkOutDateTime, LocalDateTime.now());
+        
         bookingQueue.enqueue(booking);
+        saveData();
         return booking;
     }
 
@@ -79,7 +83,9 @@ public class WalkInRegistrationControl {
     public Booking cancelBooking(String bookingId) {
         Booking removed = bookingQueue.removeById(bookingId);
         if (removed != null) {
-            removed.setStatus(Booking.STATUS_CANCELLED);
+            removed.setBookingStatus(Booking.STATUS_CANCELLED);
+            processedLog.enqueue(removed); // optional: keep log of cancelled bookings
+            saveData();
         }
         return removed;
     }
@@ -167,7 +173,7 @@ public class WalkInRegistrationControl {
     }
 
     private int compareByRoomTypeThenCheckIn(Booking a, Booking b) {
-        int roomCompare = a.getRoomType().compareTo(b.getRoomType());
+        int roomCompare = a.getRoom().getType().compareTo(b.getRoom().getType());
         if (roomCompare != 0) {
             return roomCompare;
         }
@@ -180,7 +186,7 @@ public class WalkInRegistrationControl {
         Booking[] temp = new Booking[all.length];
         int count = 0;
         for (Booking b : all) {
-            if (b.getRoomType().equalsIgnoreCase(roomType)) {
+            if (b.getRoom().getType().equalsIgnoreCase(roomType)) {
                 temp[count++] = b;
             }
         }
@@ -204,9 +210,5 @@ public class WalkInRegistrationControl {
 
     private String generateBookingId() {
         return String.format("BK%05d", bookingCounter++);
-    }
-
-    private String generateGuestId() {
-        return String.format("G%04d", guestCounter++);
     }
 }

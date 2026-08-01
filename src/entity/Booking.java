@@ -20,7 +20,7 @@ public class Booking {
     private LocalDateTime checkInDateTime;
     private LocalDateTime checkOutDateTime;
     private LocalDateTime registeredAt;
-    private String status;
+    private String bookingStatus;
 
     public Booking(String confirmationNo, Guest guest, String roomType, double pricePerNight, int numGuests, LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime, LocalDateTime registeredAt) {
         this.confirmationNo = confirmationNo;
@@ -44,8 +44,8 @@ public class Booking {
     public String getBookingId() { return confirmationNo; }
     public void setBookingId(String bookingId) { this.confirmationNo = bookingId; }
 
-    public Guest getGuest() { return guest; }
-    public void setGuest(Guest guest) { this.guest = guest; }
+    public String getGuestName() { return guestName; }
+    public void setGuestName(String guestName) { this.guestName = guestName; }
 
     public Room getRoom() { return room; }
     public void setRoom(Room room) {
@@ -85,8 +85,8 @@ public class Booking {
     public LocalDateTime getRegisteredAt() { return registeredAt; }
     public void setRegisteredAt(LocalDateTime registeredAt) { this.registeredAt = registeredAt; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public String getBookingStatus() { return bookingStatus; }
+    public void setBookingStatus(String bookingStatus) { this.bookingStatus = bookingStatus; }
 
     public int getNights() {
         if (checkInDateTime == null || checkOutDateTime == null) return 1;
