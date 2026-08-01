@@ -4,8 +4,6 @@ package boundary;
 import control.WalkInRegistrationControl;
 import entity.Booking;
 import entity.Room;
-import entity.Staff;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -37,11 +35,11 @@ public class WalkInRegistrationUI {
             System.out.println("2. Process next booking (assign room)");
             System.out.println("3. Cancel a booking");
             System.out.println("4. Check-out a booking (mark room dirty)");
-            System.out.println("5. View current queue (Available)");
-            System.out.println("6. View booked / checked-out rooms");
+            System.out.println("5. View pending queue");
+            System.out.println("6. View confirmed bookings");
             System.out.println("7. Report: Bookings sorted by room type");
             System.out.println("8. Report: Filter bookings by room type");
-            System.out.println("0. Log out");
+            System.out.println("0. Return to Main Menu");
             System.out.print("Enter choice: ");
             choice = readMenuChoice();
 
@@ -54,7 +52,7 @@ public class WalkInRegistrationUI {
                 case 6 -> viewProcessedLog();
                 case 7 -> showSortedReport();
                 case 8 -> showFilterReport();
-                case 0 -> System.out.println("Logging out...");
+                case 0 -> System.out.println("Returning to Main Menu...");
                 default -> System.out.println("Invalid choice.");
             }
         } while (choice != 0);
@@ -194,8 +192,17 @@ public class WalkInRegistrationUI {
             System.out.println("Queue is empty - no booking to process.");
             return;
         }
-        Booking next = control.processNextBooking();
-        System.out.println("Processed and assigned (now BOOKED): " + next);
+        Booking next = control.getNextBooking();
+        Room room = control.getAvailableRoom(next.getRoomType());
+        if(room == null){
+            System.out.println("No available " + next.getRoomType() + " rooms.");
+            return;
+        }
+        Booking result = control.processNextBooking(room);
+        System.out.println(
+            "Assigned Room " + room.getRoomNo()
+            + ": " + result
+        );
     }
 
     private void cancelBooking() {
@@ -302,7 +309,7 @@ public class WalkInRegistrationUI {
             String staffStr = b.getStaff() != null ? b.getStaff().getUsername() : "N/A";
             String roomStr = b.getRoom() != null ? b.getRoom().getType() + "(" + b.getRoom().getNumber() + ")" : "N/A";
             System.out.printf(TABLE_ROW_FMT,
-                    b.getBookingId(), staffStr, b.getGuestName(), roomStr, b.getNumGuests(),
+                    b.getBookingId(), b.getGuest().getGuestName(), b.getRoomType(), b.getNumGuests(),
                     b.getCheckInDateTime().toString().replace("T", " "),
                     b.getCheckOutDateTime().toString().replace("T", " "),
                     b.getNights(), b.getTotalPrice(), b.getBookingStatus());

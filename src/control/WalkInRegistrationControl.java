@@ -2,18 +2,22 @@
 package control;
 
 import entity.Booking;
+import entity.Guest;
 import entity.Room;
-import entity.Staff;
-import entity.MyQueue;
-import java.time.LocalDateTime;
 
-import data.RoomData;
-import data.StaffData;
+import java.time.LocalDateTime;
+import data.JsonManager;
+
+import adt.MyQueue;
 
 public class WalkInRegistrationControl {
 
-    private MyQueue<Booking> bookingQueue;   // waiting to be assigned a room (status AVAILABLE)
-    private MyQueue<Booking> processedLog;   // already assigned rooms (status BOOKED or DIRTY)
+    public static final String[] ROOM_TYPES = {"Standard", "Deluxe", "Suite"};
+    private static final double[] ROOM_PRICES = {150.00, 250.00, 400.00};
+    private Room[] rooms;
+
+    private MyQueue<Booking> bookingQueue;
+    private MyQueue<Booking> processedLog;
     private int bookingCounter;
 
     private DataRepository dataRepository;
@@ -23,95 +27,25 @@ public class WalkInRegistrationControl {
     public WalkInRegistrationControl() {
         bookingQueue = new MyQueue<>();
         processedLog = new MyQueue<>();
-        dataRepository = new DataRepository();
-        loadData();
+
+        rooms = JsonManager.loadRooms();
+        
+        bookingCounter = 1;
+        guestCounter = 1;
     }
 
-    private void loadData() {
-        // Load Staff
-        Staff[] loadedStaff = dataRepository.loadStaff();
-        if (loadedStaff == null || loadedStaff.length == 0) {
-            staffList = StaffData.STAFF;
-            dataRepository.saveStaff(staffList);
-        } else {
-            staffList = loadedStaff;
-        }
-
-        // Load Rooms
-        Room[] loadedRooms = dataRepository.loadRooms();
-        if (loadedRooms == null || loadedRooms.length == 0) {
-            rooms = RoomData.ROOMS;
-            dataRepository.saveRooms(rooms);
-        } else {
-            rooms = loadedRooms;
-        }
-
-        // Load Bookings
-        Booking[] allBookings = dataRepository.loadBookings();
-        int maxId = 0;
-        for (Booking b : allBookings) {
-            // Re-link with local objects to avoid detached instances
-            if (b.getStaff() != null) {
-                b.setStaff(getStaffById(b.getStaff().getStaffId()));
-            }
-            if (b.getRoomId() != null) {
-                b.setRoom(getRoomById(b.getRoomId()));
-            }
-
-            if (Booking.STATUS_AVAILABLE.equals(b.getBookingStatus())) {
-                bookingQueue.enqueue(b);
-            } else {
-                processedLog.enqueue(b);
-            }
-
-            try {
-                int idNum = Integer.parseInt(b.getBookingId().replace("BK", ""));
-                if (idNum > maxId)
-                    maxId = idNum;
-            } catch (Exception e) {
+    public double getPriceForRoomType(String roomType) {
+        for (int i = 0; i < ROOM_TYPES.length; i++) {
+            if (ROOM_TYPES[i].equalsIgnoreCase(roomType)) {
+                return ROOM_PRICES[i];
             }
         }
-        bookingCounter = maxId + 1;
+        return -1;
     }
 
-    public void saveData() {
-        dataRepository.saveBookings(viewQueue(), viewProcessedLog());
-        dataRepository.saveRooms(rooms);
-    }
-
-    public Staff getStaffById(String id) {
-        for (Staff s : staffList) {
-            if (s.getStaffId().equals(id))
-                return s;
-        }
-        return null;
-    }
-
-    public Staff authenticate(String staffId, String password) {
-        for (Staff s : staffList) {
-            if (s.getStaffId().equals(staffId) && s.getPassword().equals(password)) {
-                return s;
-            }
-        }
-        return null;
-    }
-
-    public Room getRoomById(String id) {
-        for (Room r : rooms) {
-            if (r.getRoomId().equals(id))
-                return r;
-        }
-        return null;
-    }
-
-    public Room[] getRooms() {
-        return rooms;
-    }
-
-    // Register a new walk-in / standard booking - joins the back of the queue.
-    // Status starts as AVAILABLE (waiting for a room to be assigned).
-    public Booking registerBooking(String guestName, String icPassport, String contact, Staff staff, Room room,
-            int numGuests, LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime) {
+    public Booking registerBooking(String name, String contactNumber, String roomType, int numGuests,
+                                    LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime) {
+        Guest guest = new Guest(generateGuestId(), name, contactNumber);
         String bookingId = generateBookingId();
         Booking booking = new Booking(bookingId, guestName, icPassport, contact, staff, room, numGuests,
                 checkInDateTime, checkOutDateTime, LocalDateTime.now());
@@ -132,16 +66,15 @@ public class WalkInRegistrationControl {
 
     // Process the next booking in arrival order: assigns a room (AVAILABLE -> BOOKED)
     // and moves it out of the waiting queue into the processed log.
-    public Booking processNextBooking() {
+    public Booking processNextBooking(Room room) {
         Booking next = bookingQueue.dequeue();
         if (next != null) {
-            next.setBookingStatus(Booking.STATUS_BOOKED);
-            if (next.getRoom() != null) {
-                next.getRoom().setStatus(Room.STATUS_OCCUPIED);
-                next.getRoom().setAvailableFrom(next.getCheckOutDateTime());
-            }
+            next.setRoomNo(room.getRoomNo());
+            next.setStatus(Booking.STATUS_CONFIRMED);
+            room.setStatus(Room.STATUS_BOOKED);
             processedLog.enqueue(next);
-            saveData();
+
+            JsonManager.saveRooms(rooms);
         }
         return next;
     }
@@ -161,12 +94,17 @@ public class WalkInRegistrationControl {
     public Booking checkOutBooking(String bookingId) {
         for (int i = 0; i < processedLog.getSize(); i++) {
             Booking b = processedLog.get(i);
-            if (b.getBookingId().equalsIgnoreCase(bookingId) && b.getBookingStatus().equals(Booking.STATUS_BOOKED)) {
-                b.setBookingStatus(Booking.STATUS_DIRTY);
-                if (b.getRoom() != null) {
-                    b.getRoom().setStatus(Room.STATUS_DIRTY);
-                }
-                saveData();
+            if (b.getBookingId().equalsIgnoreCase(bookingId) && b.getStatus().equals(Booking.STATUS_CONFIRMED)) {
+                b.setStatus(Booking.STATUS_COMPLETED);
+                for(Room room : rooms){
+
+                    if(room.getRoomNo().equals(b.getRoomNo())){
+
+                        room.setStatus(Room.STATUS_DIRTY);
+                        JsonManager.saveRooms(rooms);
+                        break;
+                    }
+                }                
                 return b;
             }
         }
@@ -176,7 +114,7 @@ public class WalkInRegistrationControl {
     public boolean processedBookingExists(String bookingId) {
         for (int i = 0; i < processedLog.getSize(); i++) {
             if (processedLog.get(i).getBookingId().equalsIgnoreCase(bookingId)
-                    && processedLog.get(i).getBookingStatus().equals(Booking.STATUS_BOOKED)) {
+                    && processedLog.get(i).getStatus().equals(Booking.STATUS_CONFIRMED)) {
                 return true;
             }
         }
@@ -255,6 +193,19 @@ public class WalkInRegistrationControl {
         Booking[] result = new Booking[count];
         System.arraycopy(temp, 0, result, 0, count);
         return result;
+    }
+
+    public Room getAvailableRoom(String roomType) {
+        for(Room room : rooms){
+            if(room.getRoomType().equalsIgnoreCase(roomType) && room.getStatus().equals(Room.STATUS_AVAILABLE)){
+                return room;
+            }
+        }
+        return null;
+    }
+
+    public Booking getNextBooking() {
+        return bookingQueue.peekFront();
     }
 
     private String generateBookingId() {

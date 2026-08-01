@@ -2,7 +2,9 @@
 // Custom Linear ADT (Queue) - array-based implementation
 // No java.util.List / ArrayList / Collections Framework classes used, per assignment rules.
 
-package entity; // adjust package to match your NetBeans project structure
+package adt; // adjust package to match your NetBeans project structure
+
+import entity.Booking;
 
 public class MyQueue<T> {
 
