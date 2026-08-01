@@ -3,22 +3,30 @@ package control;
 
 import entity.Booking;
 import entity.Guest;
-import entity.MyQueue;
+import entity.Room;
+
 import java.time.LocalDateTime;
+import data.JsonManager;
+
+import adt.MyQueue;
 
 public class WalkInRegistrationControl {
 
     public static final String[] ROOM_TYPES = {"Standard", "Deluxe", "Suite"};
-    private static final double[] ROOM_PRICES = {150.00, 250.00, 400.00}; // RM per night
+    private static final double[] ROOM_PRICES = {150.00, 250.00, 400.00};
+    private Room[] rooms;
 
-    private MyQueue<Booking> bookingQueue;   // waiting to be assigned a room (status AVAILABLE)
-    private MyQueue<Booking> processedLog;   // already assigned rooms (status BOOKED or DIRTY)
+    private MyQueue<Booking> bookingQueue;
+    private MyQueue<Booking> processedLog;
     private int bookingCounter;
     private int guestCounter;
 
     public WalkInRegistrationControl() {
         bookingQueue = new MyQueue<>();
         processedLog = new MyQueue<>();
+
+        rooms = JsonManager.loadRooms();
+        
         bookingCounter = 1;
         guestCounter = 1;
     }
@@ -32,8 +40,6 @@ public class WalkInRegistrationControl {
         return -1;
     }
 
-    // Register a new walk-in / standard booking - joins the back of the queue.
-    // Status starts as AVAILABLE (waiting for a room to be assigned).
     public Booking registerBooking(String name, String contactNumber, String roomType, int numGuests,
                                     LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime) {
         Guest guest = new Guest(generateGuestId(), name, contactNumber);
@@ -56,11 +62,15 @@ public class WalkInRegistrationControl {
 
     // Process the next booking in arrival order: assigns a room (AVAILABLE -> BOOKED)
     // and moves it out of the waiting queue into the processed log.
-    public Booking processNextBooking() {
+    public Booking processNextBooking(Room room) {
         Booking next = bookingQueue.dequeue();
         if (next != null) {
-            next.setStatus(Booking.STATUS_BOOKED);
+            next.setRoomNo(room.getRoomNo());
+            next.setStatus(Booking.STATUS_CONFIRMED);
+            room.setStatus(Room.STATUS_BOOKED);
             processedLog.enqueue(next);
+
+            JsonManager.saveRooms(rooms);
         }
         return next;
     }
@@ -78,8 +88,17 @@ public class WalkInRegistrationControl {
     public Booking checkOutBooking(String bookingId) {
         for (int i = 0; i < processedLog.getSize(); i++) {
             Booking b = processedLog.get(i);
-            if (b.getBookingId().equalsIgnoreCase(bookingId) && b.getStatus().equals(Booking.STATUS_BOOKED)) {
-                b.setStatus(Booking.STATUS_DIRTY);
+            if (b.getBookingId().equalsIgnoreCase(bookingId) && b.getStatus().equals(Booking.STATUS_CONFIRMED)) {
+                b.setStatus(Booking.STATUS_COMPLETED);
+                for(Room room : rooms){
+
+                    if(room.getRoomNo().equals(b.getRoomNo())){
+
+                        room.setStatus(Room.STATUS_DIRTY);
+                        JsonManager.saveRooms(rooms);
+                        break;
+                    }
+                }                
                 return b;
             }
         }
@@ -89,7 +108,7 @@ public class WalkInRegistrationControl {
     public boolean processedBookingExists(String bookingId) {
         for (int i = 0; i < processedLog.getSize(); i++) {
             if (processedLog.get(i).getBookingId().equalsIgnoreCase(bookingId)
-                    && processedLog.get(i).getStatus().equals(Booking.STATUS_BOOKED)) {
+                    && processedLog.get(i).getStatus().equals(Booking.STATUS_CONFIRMED)) {
                 return true;
             }
         }
@@ -168,6 +187,19 @@ public class WalkInRegistrationControl {
         Booking[] result = new Booking[count];
         System.arraycopy(temp, 0, result, 0, count);
         return result;
+    }
+
+    public Room getAvailableRoom(String roomType) {
+        for(Room room : rooms){
+            if(room.getRoomType().equalsIgnoreCase(roomType) && room.getStatus().equals(Room.STATUS_AVAILABLE)){
+                return room;
+            }
+        }
+        return null;
+    }
+
+    public Booking getNextBooking() {
+        return bookingQueue.peekFront();
     }
 
     private String generateBookingId() {
