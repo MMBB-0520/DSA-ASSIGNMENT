@@ -12,25 +12,22 @@ import java.util.Scanner;
 public class WalkInRegistrationUI {
 
     private static final DateTimeFormatter DATETIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-    private static final String TABLE_LINE =
-            "----------------------------------------------------------------------------------------------------------------------";
+    private static final String TABLE_LINE = "----------------------------------------------------------------------------------------------------------------------";
     private static final String TABLE_HEADER_FMT = "%-10s %-15s %-10s %-7s %-17s %-17s %-7s %-10s %-10s%n";
-    private static final String TABLE_ROW_FMT = "%-10s %-12s %-12s %-15s %-7d %-17s %-17s %-7d RM%-10.2f %-10s%n";
+    private static final String TABLE_ROW_FMT = "%-10s %-15s %-10s %-7d %-17s %-17s %-7d RM%-8.2f %-10s%n";
+
     private WalkInRegistrationControl control;
     private Scanner sc;
-    private Staff loggedInStaff;
 
-    public WalkInRegistrationUI(WalkInRegistrationControl control, Staff loggedInStaff) {
-        this.control = control;
-        this.sc = new Scanner(System.in);
-        this.loggedInStaff = loggedInStaff;
+    public WalkInRegistrationUI() {
+        control = new WalkInRegistrationControl();
+        sc = new Scanner(System.in);
     }
 
     public void runMenu() {
         int choice;
         do {
             System.out.println("\n=== Walk-In Registration & Standard Booking ===");
-            System.out.println("Current Staff: " + loggedInStaff.getUsername() + " (" + loggedInStaff.getRole() + ")");
             System.out.println("1. Register new booking");
             System.out.println("2. Process next booking (assign room)");
             System.out.println("3. Cancel a booking");
@@ -87,28 +84,7 @@ public class WalkInRegistrationUI {
             }
         } while (contact.isEmpty());
 
-        String icPassport;
-        do {
-            System.out.print("IC/Passport No: ");
-            icPassport = sc.nextLine().trim();
-
-            if (icPassport.isEmpty()) {
-                System.out.println("IC/Passport No cannot be empty.");
-
-            } else if (icPassport.matches("\\d+")) {
-                if (!icPassport.matches("\\d{12}")) {
-                    System.out.println("IC must contain 12 digits.");
-                    icPassport="";
-                }
-            } else {
-                if (!icPassport.matches("[A-Za-z0-9]{6,15}")) {
-                    System.out.println("Invalid Passport format.");
-                    icPassport="";
-                }
-            }
-        } while (icPassport.isEmpty());
-
-        Room room = promptRoom();
+        String roomType = promptRoomType();
         int numGuests = promptIntInRange("Number of Guests (1-6): ", 1, 6);
 
         LocalDateTime checkIn = promptDateTime("Check-In Date & Time (yyyy-MM-dd HH:mm, now or later): ", null);
@@ -119,32 +95,27 @@ public class WalkInRegistrationUI {
                 System.out.println("Check-out must be after check-in.");
                 continue;
             }
-            long days = java.time.temporal.ChronoUnit.DAYS.between(checkIn.toLocalDate(), checkOut.toLocalDate());
-            if (days < 1) {
-                System.out.println("Booking must be for at least 1 night.");
-                continue;
-            }
             break;
         }
 
-        Booking booking = control.registerBooking(name, icPassport, contact, loggedInStaff, room, numGuests, checkIn, checkOut);
+        Booking booking = control.registerBooking(name, contact, roomType, numGuests, checkIn, checkOut);
         System.out.printf("Registered: %s (Total: RM%.2f)%n", booking, booking.getTotalPrice());
     }
 
-    private Room promptRoom() {
-        Room[] rooms = control.getRooms();
+    private String promptRoomType() {
+        String[] roomTypes = WalkInRegistrationControl.ROOM_TYPES;
         while (true) {
-            System.out.println("Select Room:");
-            for (int i = 0; i < rooms.length; i++) {
-                System.out.printf("%d. Room %s - %s (RM%.2f/night) [%s]%n",
-                        i + 1, rooms[i].getNumber(), rooms[i].getType(), rooms[i].getPrice(), rooms[i].getStatus());
+            System.out.println("Select Room Type:");
+            for (int i = 0; i < roomTypes.length; i++) {
+                double price = control.getPriceForRoomType(roomTypes[i]);
+                System.out.printf("%d. %-10s (RM%.2f/night)%n", i + 1, roomTypes[i], price);
             }
             System.out.print("Enter choice: ");
             String input = sc.nextLine().trim();
             try {
                 int choice = Integer.parseInt(input);
-                if (choice >= 1 && choice <= rooms.length) {
-                    return rooms[choice - 1];
+                if (choice >= 1 && choice <= roomTypes.length) {
+                    return roomTypes[choice - 1];
                 }
             } catch (NumberFormatException e) {
                 // fall through
@@ -169,7 +140,8 @@ public class WalkInRegistrationUI {
         }
     }
 
-    // requireAfter: if not null, the entered value must be after it (used for check-in vs "now")
+    // requireAfter: if not null, the entered value must be after it (used for
+    // check-in vs "now")
     private LocalDateTime promptDateTime(String prompt, LocalDateTime requireAfter) {
         while (true) {
             System.out.print(prompt);
@@ -194,15 +166,14 @@ public class WalkInRegistrationUI {
         }
         Booking next = control.getNextBooking();
         Room room = control.getAvailableRoom(next.getRoomType());
-        if(room == null){
+        if (room == null) {
             System.out.println("No available " + next.getRoomType() + " rooms.");
             return;
         }
         Booking result = control.processNextBooking(room);
         System.out.println(
-            "Assigned Room " + room.getRoomNo()
-            + ": " + result
-        );
+                "Assigned Room " + room.getRoomNo()
+                        + ": " + result);
     }
 
     private void cancelBooking() {
@@ -285,9 +256,9 @@ public class WalkInRegistrationUI {
     }
 
     private void showFilterReport() {
-        Room roomType = promptRoom();
-        Booking[] filtered = control.filterByRoomType(roomType.getType());
-        System.out.println("--- Bookings for Room Type: " + roomType.getType() + " ---");
+        String roomType = promptRoomType();
+        Booking[] filtered = control.filterByRoomType(roomType);
+        System.out.println("--- Bookings for Room Type: " + roomType + " ---");
         if (filtered.length == 0) {
             System.out.println("No bookings found for this room type.");
             return;
@@ -297,22 +268,20 @@ public class WalkInRegistrationUI {
         for (Booking b : filtered) {
             total += b.getTotalPrice();
         }
-        System.out.printf("Subtotal for %s: RM%.2f%n", roomType.getType(), total);
+        System.out.printf("Subtotal for %s: RM%.2f%n", roomType, total);
     }
 
     private void printTable(Booking[] bookings) {
         System.out.println(TABLE_LINE);
-        System.out.printf(TABLE_HEADER_FMT, "BookingID", "Staff", "Guest", "Room", "Guests", "CheckIn", "CheckOut",
-                "Nights", "Total", "Status");
+        System.out.printf(TABLE_HEADER_FMT, "BookingID", "Guest", "RoomType", "Guests", "CheckIn", "CheckOut", "Nights",
+                "Total", "Status");
         System.out.println(TABLE_LINE);
         for (Booking b : bookings) {
-            String staffStr = b.getStaff() != null ? b.getStaff().getUsername() : "N/A";
-            String roomStr = b.getRoom() != null ? b.getRoom().getType() + "(" + b.getRoom().getNumber() + ")" : "N/A";
             System.out.printf(TABLE_ROW_FMT,
                     b.getBookingId(), b.getGuest().getGuestName(), b.getRoomType(), b.getNumGuests(),
                     b.getCheckInDateTime().toString().replace("T", " "),
                     b.getCheckOutDateTime().toString().replace("T", " "),
-                    b.getNights(), b.getTotalPrice(), b.getBookingStatus());
+                    b.getNights(), b.getTotalPrice(), b.getStatus());
         }
         System.out.println(TABLE_LINE);
     }

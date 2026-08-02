@@ -20,9 +20,10 @@ public class Booking {
     private LocalDateTime checkInDateTime;
     private LocalDateTime checkOutDateTime;
     private LocalDateTime registeredAt;
-    private String bookingStatus;
+    private String status;
 
-    public Booking(String confirmationNo, Guest guest, String roomType, double pricePerNight, int numGuests, LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime, LocalDateTime registeredAt) {
+    public Booking(String confirmationNo, Guest guest, String roomType, double pricePerNight, int numGuests,
+            LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime, LocalDateTime registeredAt) {
         this.confirmationNo = confirmationNo;
         this.guest = guest;
         this.roomType = roomType;
@@ -38,16 +39,34 @@ public class Booking {
         this.status = STATUS_PENDING;
     }
 
-    public String getConfirmationNo() { return confirmationNo; }
-    public void setConfirmationNo(String confirmationNo) { this.confirmationNo = confirmationNo; }
+    public String getConfirmationNo() {
+        return confirmationNo;
+    }
 
-    public String getBookingId() { return confirmationNo; }
-    public void setBookingId(String bookingId) { this.confirmationNo = bookingId; }
+    public void setConfirmationNo(String confirmationNo) {
+        this.confirmationNo = confirmationNo;
+    }
 
-    public String getGuestName() { return guestName; }
-    public void setGuestName(String guestName) { this.guestName = guestName; }
+    public String getBookingId() {
+        return confirmationNo;
+    }
 
-    public Room getRoom() { return room; }
+    public void setBookingId(String bookingId) {
+        this.confirmationNo = bookingId;
+    }
+
+    public Guest getGuest() {
+        return guest;
+    }
+
+    public void setGuest(Guest guest) {
+        this.guest = guest;
+    }
+
+    public Room getRoom() {
+        return room;
+    }
+
     public void setRoom(Room room) {
         this.room = room;
         if (room != null) {
@@ -57,39 +76,84 @@ public class Booking {
     }
 
     public String getRoomType() {
-        if (room != null) return room.getRoomType();
+        if (room != null)
+            return room.getRoomType();
         return roomType;
     }
-    public void setRoomType(String roomType) { this.roomType = roomType; }
-    
-    public String getRoomNo() { return roomNo; }
-    public void setRoomNo(String roomNo) { this.roomNo = roomNo;}
+
+    public void setRoomType(String roomType) {
+        this.roomType = roomType;
+    }
+
+    public String getRoomNo() {
+        return roomNo;
+    }
+
+    public void setRoomNo(String roomNo) {
+        this.roomNo = roomNo;
+    }
 
     public double getPricePerNight() {
-        if (room != null) return room.getPricePerNight();
+        if (room != null)
+            return room.getPricePerNight();
         return pricePerNight;
     }
-    public void setPricePerNight(double pricePerNight) { this.pricePerNight = pricePerNight; }
 
-    public int getNumGuests() { return numGuests; }
-    public void setNumGuests(int numGuests) { this.numGuests = numGuests; }
+    public void setPricePerNight(double pricePerNight) {
+        this.pricePerNight = pricePerNight;
+    }
 
-    public LocalDateTime getCheckin() { return checkInDateTime; }
-    public LocalDateTime getCheckInDateTime() { return checkInDateTime; }
-    public void setCheckInDateTime(LocalDateTime checkInDateTime) { this.checkInDateTime = checkInDateTime; }
+    public int getNumGuests() {
+        return numGuests;
+    }
 
-    public LocalDateTime getCheckout() { return checkOutDateTime; }
-    public LocalDateTime getCheckOutDateTime() { return checkOutDateTime; }
-    public void setCheckOutDateTime(LocalDateTime checkOutDateTime) { this.checkOutDateTime = checkOutDateTime; }
+    public void setNumGuests(int numGuests) {
+        this.numGuests = numGuests;
+    }
 
-    public LocalDateTime getRegisteredAt() { return registeredAt; }
-    public void setRegisteredAt(LocalDateTime registeredAt) { this.registeredAt = registeredAt; }
+    public LocalDateTime getCheckin() {
+        return checkInDateTime;
+    }
 
-    public String getBookingStatus() { return bookingStatus; }
-    public void setBookingStatus(String bookingStatus) { this.bookingStatus = bookingStatus; }
+    public LocalDateTime getCheckInDateTime() {
+        return checkInDateTime;
+    }
+
+    public void setCheckInDateTime(LocalDateTime checkInDateTime) {
+        this.checkInDateTime = checkInDateTime;
+    }
+
+    public LocalDateTime getCheckout() {
+        return checkOutDateTime;
+    }
+
+    public LocalDateTime getCheckOutDateTime() {
+        return checkOutDateTime;
+    }
+
+    public void setCheckOutDateTime(LocalDateTime checkOutDateTime) {
+        this.checkOutDateTime = checkOutDateTime;
+    }
+
+    public LocalDateTime getRegisteredAt() {
+        return registeredAt;
+    }
+
+    public void setRegisteredAt(LocalDateTime registeredAt) {
+        this.registeredAt = registeredAt;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
     public int getNights() {
-        if (checkInDateTime == null || checkOutDateTime == null) return 1;
+        if (checkInDateTime == null || checkOutDateTime == null)
+            return 1;
         long days = ChronoUnit.DAYS.between(checkInDateTime.toLocalDate(), checkOutDateTime.toLocalDate());
         return (int) Math.max(days, 1);
     }
