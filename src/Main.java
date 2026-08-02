@@ -1,3 +1,4 @@
+import boundary.FrontDeskSearchUI;
 import boundary.WalkInRegistrationUI;
 import java.util.Scanner;
 
@@ -31,7 +32,10 @@ public class Main {
                     walkInUI.runMenu();
                 }
                 case 2 -> System.out.println("\n[Housekeeping Task Log module is under development]");
-                case 3 -> System.out.println("\n[Front Desk Search module is under development]");
+                case 3 -> {
+                    FrontDeskSearchUI searchUI = new FrontDeskSearchUI();
+                    searchUI.runMenu();
+                }
                 case 4 -> System.out.println("\nThank you for using Hotel Management System. Goodbye!");
                 default -> System.out.println("\nInvalid choice! Please enter a number between 1 and 4.");
             }

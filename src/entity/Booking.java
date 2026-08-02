@@ -47,14 +47,6 @@ public class Booking {
         this.confirmationNo = confirmationNo;
     }
 
-    public String getBookingId() {
-        return confirmationNo;
-    }
-
-    public void setBookingId(String bookingId) {
-        this.confirmationNo = bookingId;
-    }
-
     public Guest getGuest() {
         return guest;
     }

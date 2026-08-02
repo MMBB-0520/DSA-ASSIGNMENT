@@ -84,6 +84,27 @@ public class WalkInRegistrationUI {
             }
         } while (contact.isEmpty());
 
+        String icPassport;
+        do {
+            System.out.print("IC/Passport No: ");
+            icPassport = sc.nextLine().trim();
+
+            if (icPassport.isEmpty()) {
+                System.out.println("IC/Passport No cannot be empty.");
+
+            } else if (icPassport.matches("\\d+")) {
+                if (!icPassport.matches("\\d{12}")) {
+                    System.out.println("IC must contain 12 digits.");
+                    icPassport = "";
+                }
+            } else {
+                if (!icPassport.matches("[A-Za-z0-9]{6,15}")) {
+                    System.out.println("Invalid Passport format.");
+                    icPassport = "";
+                }
+            }
+        } while (icPassport.isEmpty());
+
         String roomType = promptRoomType();
         int numGuests = promptIntInRange("Number of Guests (1-6): ", 1, 6);
 
@@ -98,7 +119,7 @@ public class WalkInRegistrationUI {
             break;
         }
 
-        Booking booking = control.registerBooking(name, contact, roomType, numGuests, checkIn, checkOut);
+        Booking booking = control.registerBooking(name, contact, icPassport, roomType, numGuests, checkIn, checkOut);
         System.out.printf("Registered: %s (Total: RM%.2f)%n", booking, booking.getTotalPrice());
     }
 
@@ -278,7 +299,7 @@ public class WalkInRegistrationUI {
         System.out.println(TABLE_LINE);
         for (Booking b : bookings) {
             System.out.printf(TABLE_ROW_FMT,
-                    b.getBookingId(), b.getGuest().getGuestName(), b.getRoomType(), b.getNumGuests(),
+                    b.getConfirmationNo(), b.getGuest().getGuestName(), b.getRoomType(), b.getNumGuests(),
                     b.getCheckInDateTime().toString().replace("T", " "),
                     b.getCheckOutDateTime().toString().replace("T", " "),
                     b.getNights(), b.getTotalPrice(), b.getStatus());

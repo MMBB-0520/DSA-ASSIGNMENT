@@ -65,7 +65,7 @@ public class MyQueue<T> {
         for (int i = 0; i < size; i++) {
             int index = (front + i) % capacity;
             Booking b = (Booking) items[index];
-            if (b != null && b.getBookingId().equals(bookingId)) {
+            if (b != null && b.getConfirmationNo().equals(bookingId)) {
                 T removed = (T) items[index];
                 // shift everything after it back by one position
                 for (int j = i; j < size - 1; j++) {
