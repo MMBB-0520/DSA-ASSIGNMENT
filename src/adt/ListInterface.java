@@ -20,6 +20,9 @@ public interface ListInterface<T> {
 
     int size();
 
+    // [add-on method] PANG JIA YIE: Removes and returns the last entry (used for Rollback / Undo in Housekeeping)
+    T removeLast();
+
     // NG YUEN QI
     boolean set(int givenPosition, T newEntry);
 

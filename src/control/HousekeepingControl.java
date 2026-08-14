@@ -1,7 +1,7 @@
 package control;
 
-import adt.ArrayStack;
-import adt.StackInterface;
+import adt.CustomLinkedList;
+import adt.ListInterface;
 import data.JsonManager;
 import entity.Room;
 import entity.RoomTaskLog;
@@ -10,21 +10,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HousekeepingControl {
-    private StackInterface<RoomTaskLog> taskLogStack;
+    private ListInterface<RoomTaskLog> taskLogList;
     private List<Room> roomList;
 
     public HousekeepingControl() {
-        this.taskLogStack = new ArrayStack<>();
+        this.taskLogList = new CustomLinkedList<>();
         this.roomList = new ArrayList<>();
         loadRoomsFromData();
         initSampleTaskLogs();
     }
 
     private void initSampleTaskLogs() {
-        if (taskLogStack.isEmpty()) {
+        if (taskLogList.isEmpty()) {
             RoomTaskLog log105 = new RoomTaskLog("105", "Dirty", "Cleaning In Progress", "S001");
             log105.setStartTime(System.currentTimeMillis());
-            taskLogStack.push(log105);
+            taskLogList.add(log105);
         }
     }
 
@@ -79,7 +79,7 @@ public class HousekeepingControl {
         saveRoomsToData();
         
         RoomTaskLog log = new RoomTaskLog(roomId, currentStatus, nextStatus, staffId);
-        taskLogStack.push(log);
+        taskLogList.add(log);
         
         System.out.println("Success: Assigned Room " + roomId + " to Housekeeper " + staffId + ". Status: " + nextStatus);
         return true;
@@ -115,7 +115,7 @@ public class HousekeepingControl {
         } else {
             RoomTaskLog log = new RoomTaskLog(roomId, "Cleaning In Progress", nextStatus, staffId);
             log.setEndTime(System.currentTimeMillis());
-            taskLogStack.push(log);
+            taskLogList.add(log);
         }
 
         System.out.println("Success: Room " + roomId + " cleaning completed by Housekeeper " + staffId + ". Status: " + nextStatus);
@@ -123,39 +123,23 @@ public class HousekeepingControl {
     }
 
     private RoomTaskLog findActiveCleaningLog(String roomId) {
-        StackInterface<RoomTaskLog> tempStack = new ArrayStack<>();
-        RoomTaskLog foundLog = null;
-        while (!taskLogStack.isEmpty()) {
-            RoomTaskLog log = taskLogStack.pop();
-            if (log.getRoomId().equalsIgnoreCase(roomId) && log.getNewStatus().equalsIgnoreCase("Cleaning In Progress")) {
-                foundLog = log;
-                tempStack.push(log);
-                break;
+        for (int i = taskLogList.size(); i >= 1; i--) {
+            RoomTaskLog log = taskLogList.get(i);
+            if (log != null && log.getRoomId().equalsIgnoreCase(roomId) && log.getNewStatus().equalsIgnoreCase("Cleaning In Progress")) {
+                return log;
             }
-            tempStack.push(log);
         }
-        while (!tempStack.isEmpty()) {
-            taskLogStack.push(tempStack.pop());
-        }
-        return foundLog;
+        return null;
     }
 
     private RoomTaskLog findLogByRoomAndStatus(String roomId, String status) {
-        StackInterface<RoomTaskLog> tempStack = new ArrayStack<>();
-        RoomTaskLog foundLog = null;
-        while (!taskLogStack.isEmpty()) {
-            RoomTaskLog log = taskLogStack.pop();
-            if (log.getRoomId().equalsIgnoreCase(roomId) && log.getNewStatus().equalsIgnoreCase(status)) {
-                foundLog = log;
-                tempStack.push(log);
-                break;
+        for (int i = taskLogList.size(); i >= 1; i--) {
+            RoomTaskLog log = taskLogList.get(i);
+            if (log != null && log.getRoomId().equalsIgnoreCase(roomId) && log.getNewStatus().equalsIgnoreCase(status)) {
+                return log;
             }
-            tempStack.push(log);
         }
-        while (!tempStack.isEmpty()) {
-            taskLogStack.push(tempStack.pop());
-        }
-        return foundLog;
+        return null;
     }
 
     public boolean inspectRoom(String roomId, String supervisorId, boolean isClean) {
@@ -181,7 +165,7 @@ public class HousekeepingControl {
         } else {
             RoomTaskLog log = new RoomTaskLog(roomId, "Cleaned", nextStatus, supervisorId);
             log.setEndTime(System.currentTimeMillis());
-            taskLogStack.push(log);
+            taskLogList.add(log);
         }
 
         if (isClean) {
@@ -194,15 +178,15 @@ public class HousekeepingControl {
     }
 
     /**
-     * Requirement: Instantly Rollback the schedule (Undo using Stack pop).
+     * Requirement: Instantly Rollback the schedule (Undo using List removeLast / remove).
      */
     public boolean undoLastAction() {
-        if (taskLogStack.isEmpty()) {
+        if (taskLogList.isEmpty()) {
             System.out.println("Notice: No actions in the task log stack to roll back.");
             return false;
         }
 
-        RoomTaskLog lastLog = taskLogStack.pop();
+        RoomTaskLog lastLog = taskLogList.removeLast();
         Room room = findRoom(lastLog.getRoomId());
 
         if (room != null) {
@@ -241,7 +225,7 @@ public class HousekeepingControl {
         saveRoomsToData();
 
         RoomTaskLog log = new RoomTaskLog(roomId, currentStatus, newStatus, staffId);
-        taskLogStack.push(log);
+        taskLogList.add(log);
 
         System.out.println("\n[LATE CHECK-OUT ROLLBACK EXECUTED]");
         System.out.println("Guest late check-out approved for Room " + roomId + ".");
@@ -249,18 +233,18 @@ public class HousekeepingControl {
         return true;
     }
 
-    public StackInterface<RoomTaskLog> getTaskLogStack() {
-        return taskLogStack;
+    public ListInterface<RoomTaskLog> getTaskLogList() {
+        return taskLogList;
     }
 
     public void displayOperationalReport() {
         System.out.println("\n=========================================================================================");
         System.out.println("                         HOUSEKEEPING TASK HISTORY REPORT                                ");
         System.out.println("=========================================================================================");
-        if (taskLogStack.isEmpty()) {
+        if (taskLogList.isEmpty()) {
             System.out.println(" (No task history entries recorded yet)");
         } else {
-            int totalCount = taskLogStack.size();
+            int totalCount = taskLogList.size();
             String border = "+---------+----------+--------------------------+----------+------------+------------+";
             
             System.out.println(border);
@@ -268,24 +252,20 @@ public class HousekeepingControl {
                     "Task ID", "Room No.", "Status", "Staff ID", "Start Time", "End Time");
             System.out.println(border);
 
-            StackInterface<RoomTaskLog> tempStack = new ArrayStack<>();
-            int count = totalCount;
-            while (!taskLogStack.isEmpty()) {
-                RoomTaskLog log = taskLogStack.pop();
-                String taskId = String.format("HK%03d", count--);
-                System.out.printf("| %-7s | %-8s | %-24s | %-8s | %-10s | %-10s |\n", 
-                        taskId, 
-                        log.getRoomId(), 
-                        log.getNewStatus(), 
-                        log.getStaffId(), 
-                        log.getFormattedTime(log.getStartTime()),
-                        log.getFormattedTime(log.getEndTime()));
-                tempStack.push(log);
+            for (int i = totalCount; i >= 1; i--) {
+                RoomTaskLog log = taskLogList.get(i);
+                if (log != null) {
+                    String taskId = String.format("HK%03d", i);
+                    System.out.printf("| %-7s | %-8s | %-24s | %-8s | %-10s | %-10s |\n", 
+                            taskId, 
+                            log.getRoomId(), 
+                            log.getNewStatus(), 
+                            log.getStaffId(), 
+                            log.getFormattedTime(log.getStartTime()),
+                            log.getFormattedTime(log.getEndTime()));
+                }
             }
 
-            while (!tempStack.isEmpty()) {
-                taskLogStack.push(tempStack.pop());
-            }
             System.out.println(border);
             System.out.println(" Total tasks: " + totalCount);
         }

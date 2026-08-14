@@ -125,6 +125,14 @@ public class CustomLinkedList<T> implements ListInterface<T>, Iterable<T> {
         return numberOfEntries;
     }
 
+    @Override
+    public T removeLast() {
+        if (isEmpty()) {
+            return null;
+        }
+        return remove(numberOfEntries);
+    }
+
     // =============================================================
     // 三、 Member 3 贡献的基础方法 (Front-Desk 模块)
     // =============================================================
