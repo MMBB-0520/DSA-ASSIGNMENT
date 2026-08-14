@@ -6,6 +6,9 @@ public class Room {
     public static final String STATUS_DIRTY = "DIRTY";
     public static final String STATUS_CLEANING = "CLEANING";
     public static final String STATUS_INSPECTED = "INSPECTED";
+    public static final String STATUS_LATE_30MINS = "LATE (30 MINS)";
+    public static final String STATUS_LATE_2HRS = "LATE (2HRS)";
+    public static final String STATUS_LATE_4HRS = "LATE (4HRS)";
 
     private String roomNo;
     private String roomType;

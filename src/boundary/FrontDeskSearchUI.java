@@ -4,6 +4,7 @@ import control.FrontDeskSearchControl;
 import control.StaffControl;
 import entity.Booking;
 import entity.Guest;
+import entity.Staff;
 import entity.Room;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
@@ -110,12 +111,22 @@ public class FrontDeskSearchUI {
 
         // Seamless Check-In Prompt if status is CONFIRMED or PENDING
         if (Booking.STATUS_CHECKED_IN.equalsIgnoreCase(booking.getStatus())) {
-            System.out.println("\n[i] Notice: This guest is already CHECKED-IN.");
+            System.out.println("\n[i] Notice: This guest is currently CHECKED-IN.");
+            int currentLateOpt = control.determineLateCheckOutOption(booking);
+            if (currentLateOpt > 0) {
+                System.out.println("    Active Late Check-Out Option: Tier " + currentLateOpt);
+            }
+
+            System.out.print("\nDo you want to PRE-REQUEST a Late Check-Out for this guest? (Y/N): ");
+            String ans = scanner.nextLine().trim();
+            if (ans.equalsIgnoreCase("Y")) {
+                promptPreRequestLateCheckOut(booking);
+            }
             return;
         }
         if (Booking.STATUS_CANCELLED.equalsIgnoreCase(booking.getStatus())
                 || Booking.STATUS_COMPLETED.equalsIgnoreCase(booking.getStatus())) {
-            System.out.println("\n[i] Notice: Booking status is " + booking.getStatus() + ". No check-in required.");
+            System.out.println("\n[i] Notice: Booking status is " + booking.getStatus() + ". No further action required.");
             return;
         }
         if (Booking.STATUS_CONFIRMED.equalsIgnoreCase(booking.getStatus())) {
@@ -130,6 +141,54 @@ public class FrontDeskSearchUI {
             System.out.println("\n[i] Notice: Booking status is " + booking.getStatus() + ". No action required.");
             System.out.println("\nPress any key to continue...");
             scanner.nextLine();
+        }
+    }
+
+    /**
+     * Handles pre-requesting Late Check-Out duration selection and pre-charging late fee.
+     */
+    private void promptPreRequestLateCheckOut(Booking booking) {
+        double pricePerNight = booking.getPricePerNight();
+        System.out.println("\n" + SUB_DIVIDER);
+        System.out.println(" LATE CHECK-OUT DURATION SELECTION (PRE-REQUEST)");
+        System.out.println(SUB_DIVIDER);
+        System.out.println(" [1] 30 mins - 2 hrs   : +25% Price/Night (+RM " + String.format("%.2f", pricePerNight * 0.25) + ")");
+        System.out.println(" [2] 2 - 4 hrs         : +50% Price/Night (+RM " + String.format("%.2f", pricePerNight * 0.50) + ")");
+        System.out.println(" [3] > 4 hrs           : +100% Price/Night / Extra 1 Night (+RM " + String.format("%.2f", pricePerNight * 1.00) + ")");
+        System.out.println(" [0] Cancel / Reset");
+        System.out.println(SUB_DIVIDER);
+        System.out.print("Select Requested Late Check-Out Option [0-3]: ");
+        String optStr = scanner.nextLine().trim();
+
+        try {
+            int opt = Integer.parseInt(optStr);
+            if (opt >= 0 && opt <= 3) {
+                double lateFee = control.calculateLateCheckOutCharge(pricePerNight, opt);
+                if (opt > 0) {
+                    System.out.printf("Pre-Requested Late Fee: RM %.2f%n", lateFee);
+                    System.out.print("Collect cash for pre-requested late fee now? (Y/N): ");
+                    String payAns = scanner.nextLine().trim();
+                    if (payAns.equalsIgnoreCase("Y")) {
+                        System.out.printf("Enter Cash Received (Min RM %.2f): ", lateFee);
+                        String cashStr = scanner.nextLine().trim();
+                        try {
+                            double cash = Double.parseDouble(cashStr);
+                            if (cash >= lateFee) {
+                                System.out.printf("Change Due: RM %.2f%n", cash - lateFee);
+                            }
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+                boolean ok = control.requestLateCheckOut(booking.getConfirmationNo(), opt);
+                if (ok) {
+                    System.out.println("\n[√] SUCCESS: Late Check-Out pre-request recorded!");
+                } else {
+                    System.out.println("\n[!] Error saving pre-requested late check-out.");
+                }
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid choice.");
         }
     }
 
@@ -435,33 +494,8 @@ public class FrontDeskSearchUI {
         Guest guest = booking.getGuest();
         String roomInfo = (booking.getRoomNo() != null) ? booking.getRoomNo() : "Unassigned";
 
-        System.out.println("\n" + SUB_DIVIDER);
-        System.out.println(" LATE CHECK-OUT DURATION SELECTION");
-        System.out.println(SUB_DIVIDER);
         double pricePerNight = booking.getPricePerNight();
-        System.out.println(" [0] <= 30 mins        : Grace Period (Free - RM 0.00)");
-        System.out.printf(" [1] 30 mins - 2 hrs   : +25%% Price/Night (+RM %.2f)%n", pricePerNight * 0.25);
-        System.out.printf(" [2] 2 - 4 hrs         : +50%% Price/Night (+RM %.2f)%n", pricePerNight * 0.50);
-        System.out.printf(" [3] > 4 hrs           : +100%% Price/Night / Extra 1 Night (+RM %.2f)%n",
-                pricePerNight * 1.00);
-        System.out.println(SUB_DIVIDER);
-
-        int lateOption = 0;
-        while (true) {
-            System.out.print("Select Late Check-Out Option (0 - 3): ");
-            String optStr = scanner.nextLine().trim();
-            try {
-                int opt = Integer.parseInt(optStr);
-                if (opt >= 0 && opt <= 3) {
-                    lateOption = opt;
-                    break;
-                }
-                System.out.println("Invalid option! Please enter 0, 1, 2, or 3.");
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid numeric input. Please enter 0, 1, 2, or 3.");
-            }
-        }
-
+        int lateOption = control.determineLateCheckOutOption(booking);
         double roomCharge = booking.getRoomCharge();
         double serviceCharge = booking.getServiceCharge();
         double lateCharge = control.calculateLateCheckOutCharge(pricePerNight, lateOption);
@@ -472,11 +506,20 @@ public class FrontDeskSearchUI {
         double netDue = subtotalBill - depositPaid;
 
         String lateOptLabel = switch (lateOption) {
-            case 1 -> "30 mins - 2 hrs (+25%)";
-            case 2 -> "2 - 4 hrs (+50%)";
-            case 3 -> "> 4 hrs (+100% / Extra 1 Night)";
-            default -> "Grace Period (Free)";
+            case 1 -> "30 mins - 2 hrs (+25% Auto)";
+            case 2 -> "2 - 4 hrs (+50% Auto)";
+            case 3 -> "> 4 hrs (+100% / Extra 1 Night Auto)";
+            default -> "Grace Period / On Time (Free)";
         };
+
+        if (booking.getRequestedLateOption() > 0) {
+            lateOptLabel = switch (booking.getRequestedLateOption()) {
+                case 1 -> "30 mins - 2 hrs (+25% Pre-Requested)";
+                case 2 -> "2 - 4 hrs (+50% Pre-Requested)";
+                case 3 -> "> 4 hrs (+100% Pre-Requested)";
+                default -> lateOptLabel;
+            };
+        }
 
         System.out.println("\n" + DIVIDER);
         System.out.println(" HOTEL CHECK-OUT STATEMENT & DEPOSIT SETTLEMENT (" + booking.getInvoiceNo() + ")");
@@ -536,7 +579,7 @@ public class FrontDeskSearchUI {
             }
         }
 
-        boolean success = control.processCheckOut(confirmationNo, lateOption, cashTendered);
+        boolean success = control.processCheckOut(confirmationNo, cashTendered);
         if (success) {
             System.out.println("\n" + SUB_DIVIDER);
             System.out.println(" CHECK-OUT COMPLETED SUCCESSFULLY!");

@@ -33,6 +33,7 @@ public class Booking implements Comparable<Booking> {
     private double otherCharges;
     private double cashTendered;
     private double changeDue;
+    private int requestedLateOption;
 
     public Booking(String confirmationNo, Guest guest, String roomType, double pricePerNight, int numGuests,
             LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime, LocalDateTime registeredAt) {
@@ -53,6 +54,7 @@ public class Booking implements Comparable<Booking> {
         this.otherCharges = 80.00;
         this.cashTendered = 0.0;
         this.changeDue = 0.0;
+        this.requestedLateOption = 0;
     }
 
     public String getConfirmationNo() {
@@ -239,6 +241,14 @@ public class Booking implements Comparable<Booking> {
         this.paymentStatus = PAYMENT_PAID_CASH;
         this.paymentMethod = METHOD_CASH;
         return true;
+    }
+
+    public int getRequestedLateOption() {
+        return requestedLateOption;
+    }
+
+    public void setRequestedLateOption(int requestedLateOption) {
+        this.requestedLateOption = requestedLateOption;
     }
 
     @Override

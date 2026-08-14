@@ -72,6 +72,35 @@ public class FrontDeskSearchControl {
                             }
                         }
                     }
+                    // Auto-update room status to LATE CHECK-OUT tier if CHECKED_IN and past checkOutDateTime
+                    if (Booking.STATUS_CHECKED_IN.equalsIgnoreCase(b.getStatus())
+                            && b.getRoomNo() != null && !b.getRoomNo().isEmpty()
+                            && b.getCheckOutDateTime() != null
+                            && java.time.LocalDateTime.now().isAfter(b.getCheckOutDateTime())) {
+
+                        long minutesOver = java.time.temporal.ChronoUnit.MINUTES.between(b.getCheckOutDateTime(), java.time.LocalDateTime.now());
+                        String lateRoomStatus;
+                        if (minutesOver <= 30) {
+                            lateRoomStatus = Room.STATUS_LATE_30MINS;
+                        } else if (minutesOver <= 120) {
+                            lateRoomStatus = Room.STATUS_LATE_2HRS;
+                        } else {
+                            lateRoomStatus = Room.STATUS_LATE_4HRS;
+                        }
+
+                        if (allRooms != null) {
+                            for (Room r : allRooms) {
+                                if (r != null && r.getRoomNo().equalsIgnoreCase(b.getRoomNo())) {
+                                    if (!lateRoomStatus.equalsIgnoreCase(r.getStatus())) {
+                                        r.setStatus(lateRoomStatus);
+                                        roomUpdated = true;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
                     bookingTree.insert(b);
                 }
             }
@@ -228,7 +257,7 @@ public class FrontDeskSearchControl {
     }
 
     /**
-     * Calculates Late Check-Out Charge based on staff selection:
+     * Calculates Late Check-Out Charge based on lateOption:
      * Option 0: <= 30 mins -> RM 0.00 (Grace Period)
      * Option 1: 30 mins - 2 hours -> 25% of pricePerNight
      * Option 2: 2 - 4 hours -> 50% of pricePerNight
@@ -244,13 +273,65 @@ public class FrontDeskSearchControl {
     }
 
     /**
-     * Processes Check-Out for a booking:
-     * Calculates final bill including Late Check-Out Charge, deducts deposits (30%
-     * Booking Deposit + RM200 Security Deposit),
-     * computes net balance / refund, updates status to COMPLETED, and sets assigned
-     * room status to DIRTY.
+     * Determines late check-out option automatically:
+     * - Uses requestedLateOption if pre-requested by guest in advance.
+     * - Otherwise automatically calculates based on actual elapsed time past checkOutDateTime vs current time.
      */
-    public boolean processCheckOut(String confirmationNo, int lateOption, double cashTendered) {
+    public int determineLateCheckOutOption(Booking booking) {
+        if (booking == null) {
+            return 0;
+        }
+
+        if (booking.getRequestedLateOption() > 0) {
+            return booking.getRequestedLateOption();
+        }
+
+        java.time.LocalDateTime checkOutTime = booking.getCheckOutDateTime();
+        if (checkOutTime == null) {
+            return 0;
+        }
+
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        if (!now.isAfter(checkOutTime)) {
+            return 0; // On time / Grace Period
+        }
+
+        long minutesOver = java.time.temporal.ChronoUnit.MINUTES.between(checkOutTime, now);
+
+        if (minutesOver <= 30) {
+            return 0; // <= 30 mins: Grace Period (Free)
+        } else if (minutesOver <= 120) {
+            return 1; // 30 mins - 2 hours: +25%
+        } else if (minutesOver <= 240) {
+            return 2; // 2 - 4 hours: +50%
+        } else {
+            return 3; // > 4 hours: +100% (Extra 1 night)
+        }
+    }
+
+    /**
+     * Pre-requests Late Check-Out for a checked-in guest.
+     */
+    public boolean requestLateCheckOut(String confirmationNo, int lateOption) {
+        Booking booking = searchByConfirmationNo(confirmationNo);
+        if (booking == null || !Booking.STATUS_CHECKED_IN.equalsIgnoreCase(booking.getStatus())) {
+            return false;
+        }
+        if (lateOption < 0 || lateOption > 3) {
+            return false;
+        }
+        booking.setRequestedLateOption(lateOption);
+        bookingDAO.saveBooking(booking);
+        return true;
+    }
+
+    /**
+     * Processes Check-Out for a booking:
+     * Auto-determines Late Check-Out Charge (pre-requested or actual time past checkOutDateTime),
+     * deducts pre-collected deposits (30% Booking Deposit + RM200 Security Deposit),
+     * computes net balance / refund, updates status to COMPLETED, and sets assigned room status to DIRTY.
+     */
+    public boolean processCheckOut(String confirmationNo, double cashTendered) {
         Booking booking = searchByConfirmationNo(confirmationNo);
         if (booking == null) {
             return false;
@@ -260,6 +341,8 @@ public class FrontDeskSearchControl {
         if (!Booking.STATUS_CHECKED_IN.equalsIgnoreCase(status) && !Booking.STATUS_CONFIRMED.equalsIgnoreCase(status)) {
             return false;
         }
+
+        int lateOption = determineLateCheckOutOption(booking);
 
         double roomCharge = booking.getRoomCharge();
         double serviceCharge = booking.getServiceCharge();
