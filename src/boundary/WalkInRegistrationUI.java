@@ -35,11 +35,10 @@ public class WalkInRegistrationUI {
             System.out.println("* 1. Register New Walk-In Booking                 *");
             System.out.println("* 2. Process Next Booking (Assign Room)           *");
             System.out.println("* 3. Cancel Booking                               *");
-            System.out.println("* 4. Check-Out Booking (Mark Room Dirty)          *");
-            System.out.println("* 5. View Pending Queue                           *");
-            System.out.println("* 6. View Confirmed Bookings                      *");
-            System.out.println("* 7. Report: Bookings Sorted by Room Type         *");
-            System.out.println("* 8. Report: Filter Bookings by Room Type         *");
+            System.out.println("* 4. View Pending Queue                           *");
+            System.out.println("* 5. View Confirmed Bookings                      *");
+            System.out.println("* 6. Report: Bookings Sorted by Room Type         *");
+            System.out.println("* 7. Report: Filter Bookings by Room Type         *");
             System.out.println("* 0. Return to Main Menu                          *");
             System.out.println("***************************************************");
             System.out.print("Please enter choice: ");
@@ -49,11 +48,10 @@ public class WalkInRegistrationUI {
                 case 1 -> registerBooking();
                 case 2 -> processNextBooking();
                 case 3 -> cancelBooking();
-                case 4 -> checkOutBooking();
-                case 5 -> viewQueue();
-                case 6 -> viewProcessedLog();
-                case 7 -> showSortedReport();
-                case 8 -> showFilterReport();
+                case 4 -> viewQueue();
+                case 5 -> viewProcessedLog();
+                case 6 -> showSortedReport();
+                case 7 -> showFilterReport();
                 case 0 -> System.out.println("Returning to Main Menu...");
                 default -> System.out.println("Invalid choice.");
             }
@@ -68,7 +66,7 @@ public class WalkInRegistrationUI {
         }
     }
 
-    private void registerBooking() {
+    public void registerBooking() {
         String name;
         do {
             System.out.print("Guest Name: ");
@@ -263,33 +261,6 @@ public class WalkInRegistrationUI {
         System.out.println("\n[√] BOOKING CANCELLED SUCCESSFULLY:");
         System.out.printf("    Confirmation No: %s | Guest: %s | Status: %s%n\n", 
                 cancelled.getConfirmationNo(), cancelled.getGuest().getGuestName(), cancelled.getStatus());
-    }
-
-    private void checkOutBooking() {
-        if (control.getProcessedLogSize() == 0) {
-            System.out.println("[!] No booked rooms to check out.");
-            return;
-        }
-        viewProcessedLog();
-
-        String id;
-        while (true) {
-            System.out.print("Booking ID to check out (or 0 to go back): ");
-            id = sc.nextLine().trim();
-            if (id.equals("0")) {
-                return;
-            }
-            if (control.processedBookingExists(id)) {
-                break;
-            }
-            System.out.println("[!] No BOOKED room with that ID found. Try again.");
-        }
-
-        Booking checkedOut = control.checkOutBooking(id);
-        System.out.println("\n[√] CHECK-OUT COMPLETED SUCCESSFULLY:");
-        System.out.printf("    Confirmation No: %s | Guest: %s | Room: %s%n", 
-                checkedOut.getConfirmationNo(), checkedOut.getGuest().getGuestName(), checkedOut.getRoomNo());
-        System.out.println("    Notice: Room " + checkedOut.getRoomNo() + " has been marked DIRTY for Housekeeping!\n");
     }
 
     private void viewQueue() {

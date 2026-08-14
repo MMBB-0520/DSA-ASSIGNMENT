@@ -1,14 +1,18 @@
-// Author: <your name>
 package control;
 
+import adt.MyQueue;
+import adt.BSTInterface;
+import adt.MyBinarySearchTree;
+import dao.BookingDAO;
+import dao.GuestDAO;
+import dao.RoomDAO;
+import dao.impl.BookingDAOImpl;
+import dao.impl.GuestDAOImpl;
+import dao.impl.RoomDAOImpl;
 import entity.Booking;
 import entity.Guest;
 import entity.Room;
-
 import java.time.LocalDateTime;
-import data.JsonManager;
-
-import adt.MyQueue;
 
 public class WalkInRegistrationControl {
 
@@ -18,19 +22,39 @@ public class WalkInRegistrationControl {
 
     private MyQueue<Booking> bookingQueue;
     private MyQueue<Booking> processedLog;
+    private BSTInterface<Booking> bookingTree;
     private int bookingCounter;
     private int guestCounter;
 
+    // Using DAO Interface Types (Best Practice)
+    private BookingDAO bookingDAO;
+    private RoomDAO roomDAO;
+    private GuestDAO guestDAO;
+
     public WalkInRegistrationControl() {
-        bookingQueue = new MyQueue<>();
-        processedLog = new MyQueue<>();
+        this.bookingQueue = new MyQueue<>();
+        this.processedLog = new MyQueue<>();
+        this.bookingTree = new MyBinarySearchTree<>();
 
-        rooms = JsonManager.loadRooms();
+        this.bookingDAO = new BookingDAOImpl();
+        this.roomDAO = new RoomDAOImpl();
+        this.guestDAO = new GuestDAOImpl();
 
-        Booking[] loadedBookings = JsonManager.loadBookings();
+        this.rooms = roomDAO.getAllRooms();
+
+        Booking[] loadedBookings = bookingDAO.getAllBookings();
         for (Booking b : loadedBookings) {
-            if (b.getStatus() != null && b.getStatus().equals(Booking.STATUS_PENDING)) {
+            if (b == null) {
+                continue;
+            }
+            // Load into BST for fast confirmation-number searching
+            bookingTree.insert(b);
+
+            if (b.getStatus() != null &&
+                    b.getStatus().equals(Booking.STATUS_PENDING)) {
+
                 bookingQueue.enqueue(b);
+
             } else {
                 processedLog.enqueue(b);
             }
@@ -84,12 +108,12 @@ public class WalkInRegistrationControl {
         for (int i = 0; i < processedLog.getSize(); i++) {
             all[index++] = processedLog.get(i);
         }
-        JsonManager.saveBookings(all);
+        bookingDAO.saveAllBookings(all);
         saveAllGuests(all);
     }
 
     private void saveAllGuests(Booking[] bookings) {
-        Guest[] existingGuests = JsonManager.loadGuests();
+        Guest[] existingGuests = guestDAO.getAllGuests();
         adt.MyQueue<Guest> guestQueue = new adt.MyQueue<>();
         for (Guest g : existingGuests) {
             if (g != null && g.getGuestId() != null) {
@@ -115,7 +139,7 @@ public class WalkInRegistrationControl {
         for (int i = 0; i < result.length; i++) {
             result[i] = guestQueue.get(i);
         }
-        JsonManager.saveGuests(result);
+        guestDAO.saveAllGuests(result);
     }
 
     public double getPriceForRoomType(String roomType) {
@@ -134,6 +158,7 @@ public class WalkInRegistrationControl {
         double price = getPriceForRoomType(roomType);
         Booking booking = new Booking(confirmationNo, guest, roomType, price, numGuests,
                 checkInDateTime, checkOutDateTime, LocalDateTime.now());
+        bookingTree.insert(booking);
         bookingQueue.enqueue(booking);
         saveAllBookings();
         return booking;
@@ -148,9 +173,6 @@ public class WalkInRegistrationControl {
         return false;
     }
 
-    // Process the next booking in arrival order: assigns a room (AVAILABLE ->
-    // BOOKED)
-    // and moves it out of the waiting queue into the processed log.
     public Booking processNextBooking(Room room) {
         Booking next = bookingQueue.dequeue();
         if (next != null) {
@@ -159,13 +181,12 @@ public class WalkInRegistrationControl {
             room.setStatus("Occupied");
             processedLog.enqueue(next);
 
-            JsonManager.saveRooms(rooms);
+            roomDAO.saveAllRooms(rooms);
             saveAllBookings();
         }
         return next;
     }
 
-    // Cancel a booking that is still waiting (AVAILABLE -> CANCELLED)
     public Booking cancelBooking(String bookingId) {
         Booking removed = bookingQueue.removeById(bookingId);
         if (removed != null) {
@@ -176,38 +197,6 @@ public class WalkInRegistrationControl {
         return removed;
     }
 
-    // Guest checks out of an already-booked room (BOOKED -> DIRTY, needs
-    // housekeeping)
-    public Booking checkOutBooking(String bookingId) {
-        for (int i = 0; i < processedLog.getSize(); i++) {
-            Booking b = processedLog.get(i);
-            if (b.getConfirmationNo().equalsIgnoreCase(bookingId) && b.getStatus().equals(Booking.STATUS_CONFIRMED)) {
-                b.setStatus(Booking.STATUS_COMPLETED);
-                for (Room room : rooms) {
-                    if (room.getRoomNo().equals(b.getRoomNo())) {
-                        room.setStatus(Room.STATUS_DIRTY);
-                        JsonManager.saveRooms(rooms);
-                        break;
-                    }
-                }
-                saveAllBookings();
-                return b;
-            }
-        }
-        return null;
-    }
-
-    public boolean processedBookingExists(String bookingId) {
-        for (int i = 0; i < processedLog.getSize(); i++) {
-            if (processedLog.get(i).getConfirmationNo().equalsIgnoreCase(bookingId)
-                    && processedLog.get(i).getStatus().equals(Booking.STATUS_CONFIRMED)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // View current queue in arrival order (AVAILABLE bookings only)
     public Booking[] viewQueue() {
         Booking[] result = new Booking[bookingQueue.getSize()];
         for (int i = 0; i < result.length; i++) {
@@ -216,7 +205,6 @@ public class WalkInRegistrationControl {
         return result;
     }
 
-    // View bookings that have already been assigned a room (BOOKED or DIRTY)
     public Booking[] viewProcessedLog() {
         Booking[] result = new Booking[processedLog.getSize()];
         for (int i = 0; i < result.length; i++) {
@@ -233,7 +221,6 @@ public class WalkInRegistrationControl {
         return processedLog.getSize();
     }
 
-    // Total potential revenue of everyone currently waiting in the queue
     public double getTotalQueueRevenue() {
         double total = 0;
         for (Booking b : viewQueue()) {
@@ -242,8 +229,6 @@ public class WalkInRegistrationControl {
         return total;
     }
 
-    // --- Report 1: waiting bookings sorted by room type, then check-in time ---
-    // Manual insertion sort (no Collections.sort / Arrays.sort)
     public Booking[] getBookingsSortedByRoomType() {
         Booking[] bookings = viewQueue();
         for (int i = 1; i < bookings.length; i++) {
@@ -266,7 +251,6 @@ public class WalkInRegistrationControl {
         return a.getCheckInDateTime().compareTo(b.getCheckInDateTime());
     }
 
-    // --- Report 2: filter waiting bookings by room type, using linear search ---
     public Booking[] filterByRoomType(String roomType) {
         Booking[] all = viewQueue();
         Booking[] temp = new Booking[all.length];
