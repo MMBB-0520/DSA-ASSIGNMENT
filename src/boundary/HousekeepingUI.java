@@ -44,7 +44,7 @@ public class HousekeepingUI {
         System.out.println("\n**************************************************");
         System.out.println("*              HOUSEKEEPING MODULE               *");
         System.out.println("**************************************************");
-        System.out.println("* 1. View Room Housekeeping Status               *");
+        System.out.println("* 1. View Room Status                            *");
         System.out.println("* 2. Start Cleaning (Dirty -> In Progress)       *");
         System.out.println("* 3. Complete Cleaning (In Progress -> Cleaned)  *");
         System.out.println("* 4. Inspect Room & Mark Ready for Check-In      *");

@@ -156,7 +156,7 @@ public class WalkInRegistrationControl {
         if (next != null) {
             next.setRoomNo(room.getRoomNo());
             next.setStatus(Booking.STATUS_CONFIRMED);
-            room.setStatus(Room.STATUS_BOOKED);
+            room.setStatus("Occupied");
             processedLog.enqueue(next);
 
             JsonManager.saveRooms(rooms);

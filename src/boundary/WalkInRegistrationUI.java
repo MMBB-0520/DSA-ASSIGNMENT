@@ -27,32 +27,22 @@ public class WalkInRegistrationUI {
     }
 
     public void runMenu() {
-        System.out.println("\n--- Front Desk Staff Login ---");
-        System.out.print("Enter Staff ID (e.g. F001): ");
-        String id = sc.nextLine().trim();
-        System.out.print("Enter Password: ");
-        String pwd = sc.nextLine().trim();
-        
-        Staff staff = StaffControl.authenticate(id, pwd, "Front Desk");
-        if (staff == null) {
-            System.out.println("Access Denied. Returning to Main Menu.");
-            return;
-        }
-        System.out.println("Welcome, " + staff.getName() + "!");
-
         int choice;
         do {
-            System.out.println("\n=== Walk-In Registration & Standard Booking ===");
-            System.out.println("1. Register new booking");
-            System.out.println("2. Process next booking (assign room)");
-            System.out.println("3. Cancel a booking");
-            System.out.println("4. Check-out a booking (mark room dirty)");
-            System.out.println("5. View pending queue");
-            System.out.println("6. View confirmed bookings");
-            System.out.println("7. Report: Bookings sorted by room type");
-            System.out.println("8. Report: Filter bookings by room type");
-            System.out.println("0. Return to Main Menu");
-            System.out.print("Enter choice: ");
+            System.out.println("\n***************************************************");
+            System.out.println("*    WALK-IN REGISTRATION & BOOKING SUBSYSTEM     *");
+            System.out.println("***************************************************");
+            System.out.println("* 1. Register New Walk-In Booking                 *");
+            System.out.println("* 2. Process Next Booking (Assign Room)           *");
+            System.out.println("* 3. Cancel Booking                               *");
+            System.out.println("* 4. Check-Out Booking (Mark Room Dirty)          *");
+            System.out.println("* 5. View Pending Queue                           *");
+            System.out.println("* 6. View Confirmed Bookings                      *");
+            System.out.println("* 7. Report: Bookings Sorted by Room Type         *");
+            System.out.println("* 8. Report: Filter Bookings by Room Type         *");
+            System.out.println("* 0. Return to Main Menu                          *");
+            System.out.println("***************************************************");
+            System.out.print("Please enter choice: ");
             choice = readMenuChoice();
 
             switch (choice) {
@@ -135,7 +125,27 @@ public class WalkInRegistrationUI {
         }
 
         Booking booking = control.registerBooking(name, contact, icPassport, roomType, numGuests, checkIn, checkOut);
-        System.out.printf("Registered: %s (Total: RM%.2f)%n", booking, booking.getTotalPrice());
+        printInvoiceCard(booking);
+    }
+
+    private void printInvoiceCard(Booking booking) {
+        System.out.println("\n============================================================");
+        System.out.println("            RESORT BOOKING REGISTRATION INVOICE             ");
+        System.out.println("============================================================");
+        System.out.printf(" Confirmation No : %s%n", booking.getConfirmationNo());
+        System.out.printf(" Guest Name      : %s%n", booking.getGuest().getGuestName());
+        System.out.printf(" Contact Number  : %s%n", booking.getGuest().getContactNumber());
+        System.out.printf(" IC / Passport   : %s%n", booking.getGuest().getIcPassport());
+        System.out.println("------------------------------------------------------------");
+        System.out.printf(" Room Type       : %s (RM %.2f / night)%n", booking.getRoomType(), booking.getPricePerNight());
+        System.out.printf(" Number of Guests: %d Person(s)%n", booking.getNumGuests());
+        System.out.printf(" Check-In Date   : %s%n", booking.getCheckInDateTime().format(DATETIME_FORMAT));
+        System.out.printf(" Check-Out Date  : %s%n", booking.getCheckOutDateTime().format(DATETIME_FORMAT));
+        System.out.printf(" Duration        : %d Night(s)%n", booking.getNights());
+        System.out.println("------------------------------------------------------------");
+        System.out.printf(" TOTAL AMOUNT    : RM %.2f%n", booking.getTotalPrice());
+        System.out.printf(" STATUS          : %s%n", booking.getStatus());
+        System.out.println("============================================================\n");
     }
 
     private String promptRoomType() {
@@ -197,24 +207,41 @@ public class WalkInRegistrationUI {
 
     private void processNextBooking() {
         if (control.getQueueSize() == 0) {
-            System.out.println("Queue is empty - no booking to process.");
+            System.out.println("[!] Queue is empty - no booking to process.");
             return;
         }
         Booking next = control.getNextBooking();
         Room room = control.getAvailableRoom(next.getRoomType());
         if (room == null) {
-            System.out.println("No available " + next.getRoomType() + " rooms.");
+            System.out.println("[!] No available " + next.getRoomType() + " rooms currently.");
             return;
         }
         Booking result = control.processNextBooking(room);
-        System.out.println(
-                "Assigned Room " + room.getRoomNo()
-                        + ": " + result);
+        printConfirmationCard(result, room);
+    }
+
+    private void printConfirmationCard(Booking booking, Room room) {
+        System.out.println("\n============================================================");
+        System.out.println("            ROOM ASSIGNED & BOOKING CONFIRMED               ");
+        System.out.println("============================================================");
+        System.out.printf(" Confirmation No : %s%n", booking.getConfirmationNo());
+        System.out.printf(" Guest Name      : %s%n", booking.getGuest().getGuestName());
+        System.out.printf(" Assigned Room   : Room %s (%s)%n", room.getRoomNo(), booking.getRoomType());
+        System.out.printf(" Room Rate       : RM %.2f / night%n", booking.getPricePerNight());
+        System.out.println("------------------------------------------------------------");
+        System.out.printf(" Number of Guests: %d Person(s)%n", booking.getNumGuests());
+        System.out.printf(" Check-In Date   : %s%n", booking.getCheckInDateTime().format(DATETIME_FORMAT));
+        System.out.printf(" Check-Out Date  : %s%n", booking.getCheckOutDateTime().format(DATETIME_FORMAT));
+        System.out.printf(" Duration        : %d Night(s)%n", booking.getNights());
+        System.out.printf(" Total Amount    : RM %.2f%n", booking.getTotalPrice());
+        System.out.println("------------------------------------------------------------");
+        System.out.printf(" STATUS          : %s%n", booking.getStatus());
+        System.out.println("============================================================\n");
     }
 
     private void cancelBooking() {
         if (control.getQueueSize() == 0) {
-            System.out.println("Queue is empty - nothing to cancel.");
+            System.out.println("[!] Queue is empty - nothing to cancel.");
             return;
         }
         viewQueue();
@@ -229,16 +256,18 @@ public class WalkInRegistrationUI {
             if (control.bookingExists(id)) {
                 break;
             }
-            System.out.println("No booking with that ID is currently in the queue. Try again.");
+            System.out.println("[!] No booking with that ID is currently in the queue. Try again.");
         }
 
         Booking cancelled = control.cancelBooking(id);
-        System.out.println("Cancelled: " + cancelled);
+        System.out.println("\n[√] BOOKING CANCELLED SUCCESSFULLY:");
+        System.out.printf("    Confirmation No: %s | Guest: %s | Status: %s%n\n", 
+                cancelled.getConfirmationNo(), cancelled.getGuest().getGuestName(), cancelled.getStatus());
     }
 
     private void checkOutBooking() {
         if (control.getProcessedLogSize() == 0) {
-            System.out.println("No booked rooms to check out.");
+            System.out.println("[!] No booked rooms to check out.");
             return;
         }
         viewProcessedLog();
@@ -253,11 +282,14 @@ public class WalkInRegistrationUI {
             if (control.processedBookingExists(id)) {
                 break;
             }
-            System.out.println("No BOOKED room with that ID found. Try again.");
+            System.out.println("[!] No BOOKED room with that ID found. Try again.");
         }
 
         Booking checkedOut = control.checkOutBooking(id);
-        System.out.println("Checked out - room now DIRTY: " + checkedOut);
+        System.out.println("\n[√] CHECK-OUT COMPLETED SUCCESSFULLY:");
+        System.out.printf("    Confirmation No: %s | Guest: %s | Room: %s%n", 
+                checkedOut.getConfirmationNo(), checkedOut.getGuest().getGuestName(), checkedOut.getRoomNo());
+        System.out.println("    Notice: Room " + checkedOut.getRoomNo() + " has been marked DIRTY for Housekeeping!\n");
     }
 
     private void viewQueue() {

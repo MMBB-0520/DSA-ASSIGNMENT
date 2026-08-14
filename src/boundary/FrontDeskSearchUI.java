@@ -29,19 +29,6 @@ public class FrontDeskSearchUI {
     }
 
     public void runMenu() {
-        System.out.println("\n--- Front Desk Staff Login ---");
-        System.out.print("Enter Staff ID (e.g. F001): ");
-        String id = scanner.nextLine().trim();
-        System.out.print("Enter Password: ");
-        String pwd = scanner.nextLine().trim();
-        
-        Staff staff = StaffControl.authenticate(id, pwd, "Front Desk");
-        if (staff == null) {
-            System.out.println("Access Denied. Returning to Main Menu.");
-            return;
-        }
-        System.out.println("Welcome, " + staff.getName() + "!");
-
         int choice;
         do {
             System.out.println("\n" + DIVIDER);

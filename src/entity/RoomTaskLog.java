@@ -33,6 +33,12 @@ public class RoomTaskLog {
     public String getNewStatus() {
         return newStatus;
     }
+    public void setNewStatus(String newStatus) {
+        this.newStatus = newStatus;
+    }
+    public void setPreviousStatus(String previousStatus) {
+        this.previousStatus = previousStatus;
+    }
 
     public String getStaffId() {
         return staffId;

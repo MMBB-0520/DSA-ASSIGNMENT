@@ -1,18 +1,18 @@
 [
   {
-    "confirmationNo": "10293847",
+    "confirmationNo": "84920185",
     "guest": {
-      "guestId": "G1002",
-      "guestName": "Bob Smith",
-      "contactNumber": "0198765432",
-      "icPassport": "A12345678"
+      "guestId": "G1005",
+      "guestName": "Sabrina",
+      "contactNumber": "0147435699",
+      "icPassport": "031230145278"
     },
-    "roomType": "Suite",
-    "pricePerNight": 400.0,
-    "numGuests": 3,
-    "checkInDateTime": "2026-08-13T08:37:51.3336306",
-    "checkOutDateTime": "2026-08-16T08:37:51.3336306",
-    "registeredAt": "2026-08-11T08:37:51.3336306",
+    "roomType": "Deluxe",
+    "pricePerNight": 250.0,
+    "numGuests": 2,
+    "checkInDateTime": "2026-08-14T23:40:00",
+    "checkOutDateTime": "2026-08-19T13:00:00",
+    "registeredAt": "2026-08-14T23:35:56.7439802",
     "status": "PENDING"
   },
   {
@@ -47,6 +47,40 @@
     "checkInDateTime": "2026-08-11T08:37:51.3336306",
     "checkOutDateTime": "2026-08-13T08:37:51.3336306",
     "registeredAt": "2026-08-10T08:37:51.3336306",
+    "status": "COMPLETED"
+  },
+  {
+    "confirmationNo": "10293847",
+    "guest": {
+      "guestId": "G1002",
+      "guestName": "Bob Smith",
+      "contactNumber": "0198765432",
+      "icPassport": "A12345678"
+    },
+    "roomType": "Suite",
+    "roomNo": "301",
+    "pricePerNight": 400.0,
+    "numGuests": 3,
+    "checkInDateTime": "2026-08-13T08:37:51.3336306",
+    "checkOutDateTime": "2026-08-16T08:37:51.3336306",
+    "registeredAt": "2026-08-11T08:37:51.3336306",
+    "status": "COMPLETED"
+  },
+  {
+    "confirmationNo": "84920184",
+    "guest": {
+      "guestId": "G1004",
+      "guestName": "Adam",
+      "contactNumber": "0123456789",
+      "icPassport": "000223125033"
+    },
+    "roomType": "Standard",
+    "roomNo": "102",
+    "pricePerNight": 150.0,
+    "numGuests": 2,
+    "checkInDateTime": "2026-08-15T14:00:00",
+    "checkOutDateTime": "2026-08-20T14:00:00",
+    "registeredAt": "2026-08-14T23:26:02.9458984",
     "status": "COMPLETED"
   }
 ]
