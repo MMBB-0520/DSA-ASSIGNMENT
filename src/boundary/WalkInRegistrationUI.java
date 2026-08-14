@@ -46,11 +46,10 @@ public class WalkInRegistrationUI {
             System.out.println("1. Register new booking");
             System.out.println("2. Process next booking (assign room)");
             System.out.println("3. Cancel a booking");
-            System.out.println("4. Check-out a booking (mark room dirty)");
-            System.out.println("5. View pending queue");
-            System.out.println("6. View confirmed bookings");
-            System.out.println("7. Report: Bookings sorted by room type");
-            System.out.println("8. Report: Filter bookings by room type");
+            System.out.println("4. View pending queue");
+            System.out.println("5. View confirmed bookings");
+            System.out.println("6. Report: Bookings sorted by room type");
+            System.out.println("7. Report: Filter bookings by room type");
             System.out.println("0. Return to Main Menu");
             System.out.print("Enter choice: ");
             choice = readMenuChoice();
@@ -59,11 +58,10 @@ public class WalkInRegistrationUI {
                 case 1 -> registerBooking();
                 case 2 -> processNextBooking();
                 case 3 -> cancelBooking();
-                case 4 -> checkOutBooking();
-                case 5 -> viewQueue();
-                case 6 -> viewProcessedLog();
-                case 7 -> showSortedReport();
-                case 8 -> showFilterReport();
+                case 4 -> viewQueue();
+                case 5 -> viewProcessedLog();
+                case 6 -> showSortedReport();
+                case 7 -> showFilterReport();
                 case 0 -> System.out.println("Returning to Main Menu...");
                 default -> System.out.println("Invalid choice.");
             }
@@ -78,7 +76,7 @@ public class WalkInRegistrationUI {
         }
     }
 
-    private void registerBooking() {
+    public void registerBooking() {
         String name;
         do {
             System.out.print("Guest Name: ");
@@ -234,30 +232,6 @@ public class WalkInRegistrationUI {
 
         Booking cancelled = control.cancelBooking(id);
         System.out.println("Cancelled: " + cancelled);
-    }
-
-    private void checkOutBooking() {
-        if (control.getProcessedLogSize() == 0) {
-            System.out.println("No booked rooms to check out.");
-            return;
-        }
-        viewProcessedLog();
-
-        String id;
-        while (true) {
-            System.out.print("Booking ID to check out (or 0 to go back): ");
-            id = sc.nextLine().trim();
-            if (id.equals("0")) {
-                return;
-            }
-            if (control.processedBookingExists(id)) {
-                break;
-            }
-            System.out.println("No BOOKED room with that ID found. Try again.");
-        }
-
-        Booking checkedOut = control.checkOutBooking(id);
-        System.out.println("Checked out - room now DIRTY: " + checkedOut);
     }
 
     private void viewQueue() {
