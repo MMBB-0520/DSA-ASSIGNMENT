@@ -19,9 +19,8 @@ public class Room {
     public Room(String roomNo, String roomType, double pricePerNight, String status) {
         this.roomNo = roomNo;
         this.roomType = roomType;
-        this.status = status;
         this.pricePerNight = pricePerNight;
-        this.status = STATUS_AVAILABLE;
+        this.status = (status != null ? status : STATUS_AVAILABLE);
     }
 
     public String getRoomNo() { return roomNo; }
@@ -35,6 +34,14 @@ public class Room {
 
     public double getPricePerNight() { return pricePerNight; }
     public void setPricePerNight(double pricePerNight) { this.pricePerNight = pricePerNight; }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Room room = (Room) obj;
+        return roomNo != null && roomNo.equalsIgnoreCase(room.roomNo);
+    }
 
     @Override
     public String toString() {

@@ -33,6 +33,14 @@ public class Guest {
     public void setIcPassport(String icPassport) { this.icPassport = icPassport; }
 
     @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Guest guest = (Guest) obj;
+        return guestId != null && guestId.equalsIgnoreCase(guest.guestId);
+    }
+
+    @Override
     public String toString() {
         return "Guest{id='" + guestId + "', name='" + guestName + "', contactNumber='" + contactNumber + "', icPassport='" + icPassport + "'}";
     }
