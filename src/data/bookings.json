@@ -1,1 +1,52 @@
-[]
+[
+  {
+    "confirmationNo": "10293847",
+    "guest": {
+      "guestId": "G1002",
+      "guestName": "Bob Smith",
+      "contactNumber": "0198765432",
+      "icPassport": "A12345678"
+    },
+    "roomType": "Suite",
+    "pricePerNight": 400.0,
+    "numGuests": 3,
+    "checkInDateTime": "2026-08-13T08:37:51.3336306",
+    "checkOutDateTime": "2026-08-16T08:37:51.3336306",
+    "registeredAt": "2026-08-11T08:37:51.3336306",
+    "status": "PENDING"
+  },
+  {
+    "confirmationNo": "84920183",
+    "guest": {
+      "guestId": "G1001",
+      "guestName": "Alice Johnson",
+      "contactNumber": "0123456789",
+      "icPassport": "950101-14-5566"
+    },
+    "roomType": "Deluxe",
+    "roomNo": "201",
+    "pricePerNight": 250.0,
+    "numGuests": 2,
+    "checkInDateTime": "2026-08-12T06:37:51.3336306",
+    "checkOutDateTime": "2026-08-14T08:37:51.3336306",
+    "registeredAt": "2026-08-12T05:37:51.3336306",
+    "status": "COMPLETED"
+  },
+  {
+    "confirmationNo": "59302148",
+    "guest": {
+      "guestId": "G1003",
+      "guestName": "Charlie Tan",
+      "contactNumber": "0112233445",
+      "icPassport": "900812-10-1234"
+    },
+    "roomType": "Standard",
+    "roomNo": "105",
+    "pricePerNight": 150.0,
+    "numGuests": 1,
+    "checkInDateTime": "2026-08-11T08:37:51.3336306",
+    "checkOutDateTime": "2026-08-13T08:37:51.3336306",
+    "registeredAt": "2026-08-10T08:37:51.3336306",
+    "status": "COMPLETED"
+  }
+]

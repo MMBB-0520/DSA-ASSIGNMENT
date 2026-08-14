@@ -1,4 +1,5 @@
 import boundary.FrontDeskSearchUI;
+import boundary.HousekeepingUI;
 import boundary.WalkInRegistrationUI;
 import java.util.Scanner;
 
@@ -31,7 +32,10 @@ public class Main {
                     WalkInRegistrationUI walkInUI = new WalkInRegistrationUI();
                     walkInUI.runMenu();
                 }
-                case 2 -> System.out.println("\n[Housekeeping Task Log module is under development]");
+                case 2 -> {
+                    HousekeepingUI housekeepingUI = new HousekeepingUI();
+                    housekeepingUI.runMenu();
+                }
                 case 3 -> {
                     FrontDeskSearchUI searchUI = new FrontDeskSearchUI();
                     searchUI.runMenu();

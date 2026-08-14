@@ -2,8 +2,10 @@
 package boundary;
 
 import control.WalkInRegistrationControl;
+import control.StaffControl;
 import entity.Booking;
 import entity.Room;
+import entity.Staff;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -25,6 +27,19 @@ public class WalkInRegistrationUI {
     }
 
     public void runMenu() {
+        System.out.println("\n--- Front Desk Staff Login ---");
+        System.out.print("Enter Staff ID (e.g. F001): ");
+        String id = sc.nextLine().trim();
+        System.out.print("Enter Password: ");
+        String pwd = sc.nextLine().trim();
+        
+        Staff staff = StaffControl.authenticate(id, pwd, "Front Desk");
+        if (staff == null) {
+            System.out.println("Access Denied. Returning to Main Menu.");
+            return;
+        }
+        System.out.println("Welcome, " + staff.getName() + "!");
+
         int choice;
         do {
             System.out.println("\n=== Walk-In Registration & Standard Booking ===");

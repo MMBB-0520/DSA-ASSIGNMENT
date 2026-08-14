@@ -19,9 +19,8 @@ public class Room {
     public Room(String roomNo, String roomType, double pricePerNight, String status) {
         this.roomNo = roomNo;
         this.roomType = roomType;
-        this.status = status;
         this.pricePerNight = pricePerNight;
-        this.status = STATUS_AVAILABLE;
+        this.status = status;
     }
 
     public String getRoomNo() { return roomNo; }
