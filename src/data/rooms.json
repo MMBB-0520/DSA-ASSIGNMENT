@@ -123,11 +123,7 @@
     "roomNo": "301",
     "roomType": "Suite",
     "pricePerNight": 400.0,
-<<<<<<< HEAD
     "status": "DIRTY"
-=======
-    "status": "BOOKED"
->>>>>>> 19030f6b86058681ab72eaf6901d9a55c7e1631d
   },
   {
     "roomNo": "302",
