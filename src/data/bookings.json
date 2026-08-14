@@ -8,12 +8,17 @@
       "icPassport": "A12345678"
     },
     "roomType": "Suite",
+    "roomNo": "301",
     "pricePerNight": 400.0,
     "numGuests": 3,
     "checkInDateTime": "2026-08-13T08:37:51.3336306",
     "checkOutDateTime": "2026-08-16T08:37:51.3336306",
     "registeredAt": "2026-08-11T08:37:51.3336306",
-    "status": "PENDING"
+    "status": "CONFIRMED",
+    "otherCharges": 0.0,
+    "cashTendered": 0.0,
+    "changeDue": 0.0,
+    "requestedLateOption": 0
   },
   {
     "confirmationNo": "84920183",
@@ -30,7 +35,11 @@
     "checkInDateTime": "2026-08-12T06:37:51.3336306",
     "checkOutDateTime": "2026-08-14T08:37:51.3336306",
     "registeredAt": "2026-08-12T05:37:51.3336306",
-    "status": "COMPLETED"
+    "status": "COMPLETED",
+    "otherCharges": 0.0,
+    "cashTendered": 0.0,
+    "changeDue": 0.0,
+    "requestedLateOption": 0
   },
   {
     "confirmationNo": "59302148",
@@ -47,6 +56,10 @@
     "checkInDateTime": "2026-08-11T08:37:51.3336306",
     "checkOutDateTime": "2026-08-13T08:37:51.3336306",
     "registeredAt": "2026-08-10T08:37:51.3336306",
-    "status": "COMPLETED"
+    "status": "COMPLETED",
+    "otherCharges": 0.0,
+    "cashTendered": 0.0,
+    "changeDue": 0.0,
+    "requestedLateOption": 0
   }
 ]
