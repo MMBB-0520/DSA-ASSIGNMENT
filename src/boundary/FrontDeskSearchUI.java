@@ -33,15 +33,16 @@ public class FrontDeskSearchUI {
     public void runMenu() {
         int choice;
         do {
-            System.out.println("\n" + DIVIDER);
-            System.out.println(" FRONT-DESK SERVICE & INQUIRY (BST ADT & O(log n) Search)");
-            System.out.println(DIVIDER);
-            System.out.println("1. Instant Search Guest Record & Check-In (BST O(log n) Search)");
-            System.out.println("2. Search & Filter Available Rooms (Iterate -> Filter -> Sort)");
-            System.out.println("3. Search Bill, Calculate Late Fees & Process Check-Out (Cash / Deposit Refund)");
-            System.out.println("4. View ADT & Algorithm Performance Summary");
-            System.out.println("0. Return to Main Menu");
-            System.out.println(DIVIDER);
+            System.out
+                    .println("\n*************************************************************************************");
+            System.out.println("*             FRONT-DESK SERVICE & INQUIRY (BST ADT & O(log n) Search)              *");
+            System.out.println("*************************************************************************************");
+            System.out.println("* 1. Instant Search Guest Record & Check-In (BST O(log n) Search)                   *");
+            System.out.println("* 2. Search & Filter Available Rooms (Iterate -> Filter -> Sort)                    *");
+            System.out.println("* 3. Search Bill, Calculate Late Fees & Process Check-Out (Cash / Deposit Refund)   *");
+            System.out.println("* 4. View ADT & Algorithm Performance Summary                                       *");
+            System.out.println("* 0. Return to Main Menu                                                            *");
+            System.out.println("*************************************************************************************");
             System.out.print("Enter Choice: ");
 
             choice = readChoice();
@@ -113,7 +114,8 @@ public class FrontDeskSearchUI {
         }
         if (Booking.STATUS_CANCELLED.equalsIgnoreCase(booking.getStatus())
                 || Booking.STATUS_COMPLETED.equalsIgnoreCase(booking.getStatus())) {
-            System.out.println("\n[i] Notice: Booking status is " + booking.getStatus() + ". No further action required.");
+            System.out.println(
+                    "\n[i] Notice: Booking status is " + booking.getStatus() + ". No further action required.");
             return;
         }
         if (Booking.STATUS_CONFIRMED.equalsIgnoreCase(booking.getStatus())) {
@@ -132,16 +134,20 @@ public class FrontDeskSearchUI {
     }
 
     /**
-     * Handles pre-requesting Late Check-Out duration selection and pre-charging late fee.
+     * Handles pre-requesting Late Check-Out duration selection and pre-charging
+     * late fee.
      */
     private void promptPreRequestLateCheckOut(Booking booking) {
         double pricePerNight = booking.getPricePerNight();
         System.out.println("\n" + SUB_DIVIDER);
         System.out.println(" LATE CHECK-OUT DURATION SELECTION (PRE-REQUEST)");
         System.out.println(SUB_DIVIDER);
-        System.out.println(" [1] 30 mins - 2 hrs   : +25% Price/Night (+RM " + String.format("%.2f", pricePerNight * 0.25) + ")");
-        System.out.println(" [2] 2 - 4 hrs         : +50% Price/Night (+RM " + String.format("%.2f", pricePerNight * 0.50) + ")");
-        System.out.println(" [3] > 4 hrs           : +100% Price/Night / Extra 1 Night (+RM " + String.format("%.2f", pricePerNight * 1.00) + ")");
+        System.out.println(
+                " [1] 30 mins - 2 hrs   : +25% Price/Night (+RM " + String.format("%.2f", pricePerNight * 0.25) + ")");
+        System.out.println(
+                " [2] 2 - 4 hrs         : +50% Price/Night (+RM " + String.format("%.2f", pricePerNight * 0.50) + ")");
+        System.out.println(" [3] > 4 hrs           : +100% Price/Night / Extra 1 Night (+RM "
+                + String.format("%.2f", pricePerNight * 1.00) + ")");
         System.out.println(" [0] Cancel / Reset");
         System.out.println(SUB_DIVIDER);
         System.out.print("Select Requested Late Check-Out Option [0-3]: ");

@@ -104,21 +104,23 @@ public class HousekeepingControl {
             return false;
         }
 
-        String nextStatus = "Cleaned";
-        room.setStatus(nextStatus);
+        String roomStatus = "Cleaned (Waiting for Inspection)";
+        String logStatus = "Cleaned";
+
+        room.setStatus(roomStatus);
         saveRoomsToData();
 
         // Update the existing task log directly so Task ID remains the same
         if (activeLog != null) {
-            activeLog.setNewStatus(nextStatus);
+            activeLog.setNewStatus(logStatus);
             activeLog.setEndTime(System.currentTimeMillis());
         } else {
-            RoomTaskLog log = new RoomTaskLog(roomId, "Cleaning In Progress", nextStatus, staffId);
+            RoomTaskLog log = new RoomTaskLog(roomId, "Cleaning In Progress", logStatus, staffId);
             log.setEndTime(System.currentTimeMillis());
             taskLogList.add(log);
         }
 
-        System.out.println("Success: Room " + roomId + " cleaning completed by Housekeeper " + staffId + ". Status: " + nextStatus);
+        System.out.println("Success: Room " + roomId + " cleaning completed by Housekeeper " + staffId + ". Status: " + roomStatus);
         return true;
     }
 
@@ -149,30 +151,49 @@ public class HousekeepingControl {
             return false;
         }
 
-        if (!room.getStatus().equalsIgnoreCase("Cleaned")) {
-            System.out.println("[!] Error: Room is not in 'Cleaned' state.");
+        String currentRoomStatus = room.getStatus();
+        if (!currentRoomStatus.toLowerCase().startsWith("cleaned")) {
+            System.out.println("[!] Notice: Room " + roomId + " is currently '" + currentRoomStatus + "'. Only cleaned rooms waiting for inspection can be inspected.");
             return false;
         }
 
-        String nextStatus = isClean ? Room.STATUS_INSPECTED : "Dirty";
-        room.setStatus(nextStatus);
+        String roomNextStatus = isClean ? Room.STATUS_INSPECTED : "Dirty";
+        String logStatus = isClean ? "Inspected" : "Inspected (Failed)";
+
+        room.setStatus(roomNextStatus);
         saveRoomsToData();
 
         // Update the existing task log directly so Task ID remains the same
         RoomTaskLog activeLog = findLogByRoomAndStatus(roomId, "Cleaned");
         if (activeLog != null) {
-            activeLog.setNewStatus(nextStatus);
+            activeLog.setNewStatus(logStatus);
         } else {
-            RoomTaskLog log = new RoomTaskLog(roomId, "Cleaned", nextStatus, supervisorId);
+            RoomTaskLog log = new RoomTaskLog(roomId, "Cleaned", logStatus, supervisorId);
             log.setEndTime(System.currentTimeMillis());
             taskLogList.add(log);
         }
 
+        java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String timeStr = java.time.LocalDateTime.now().format(dtf);
+
+        System.out.println("\n============================================================");
+        System.out.println("            SUPERVISOR ROOM INSPECTION REPORT               ");
+        System.out.println("============================================================");
+        System.out.printf(" Room Number       : %s%n", room.getRoomNo());
+        System.out.printf(" Room Type         : %s%n", room.getRoomType());
+        System.out.printf(" Room Rate         : RM %.2f / night%n", room.getPricePerNight());
+        System.out.println("------------------------------------------------------------");
+        System.out.printf(" Supervisor ID     : %s%n", supervisorId);
+        System.out.printf(" Inspection Time   : %s%n", timeStr);
+        System.out.printf(" Inspection Result : %s%n", isClean ? "APPROVED (PASS)" : "REJECTED (FAILED)");
+        System.out.println("------------------------------------------------------------");
+        System.out.printf(" NEW ROOM STATUS   : %s%n", roomNextStatus);
         if (isClean) {
-            System.out.println("Success: Room " + roomId + " inspected and approved by Supervisor " + supervisorId + ". Status: " + nextStatus);
+            System.out.println(" REMARK            : Room is clean & ready for Guest Check-In.");
         } else {
-            System.out.println("Notice: Room " + roomId + " failed inspection by Supervisor " + supervisorId + ". Status reverted to: " + nextStatus + " (Housekeeper must redo).");
+            System.out.println(" REMARK            : Room failed inspection. Reverted to Dirty.");
         }
+        System.out.println("============================================================\n");
 
         return true;
     }
@@ -182,7 +203,11 @@ public class HousekeepingControl {
      */
     public boolean undoLastAction() {
         if (taskLogList.isEmpty()) {
-            System.out.println("Notice: No actions in the task log stack to roll back.");
+            System.out.println("\n============================================================");
+            System.out.println("            HOUSEKEEPING ACTION ROLLBACK (UNDO)             ");
+            System.out.println("============================================================");
+            System.out.println(" [!] Notice: No task history entries available to roll back.");
+            System.out.println("============================================================\n");
             return false;
         }
 
@@ -192,13 +217,27 @@ public class HousekeepingControl {
         if (room != null) {
             room.setStatus(lastLog.getPreviousStatus());
             saveRoomsToData();
-            System.out.println("\n[ROLLBACK SUCCESSFUL]");
-            System.out.println("Rolled back log entry:");
-            System.out.println("  " + lastLog);
-            System.out.println("  Room " + room.getRoomNo() + " status reverted to: '" + room.getStatus() + "'");
+
+            System.out.println("\n============================================================");
+            System.out.println("          HOUSEKEEPING ACTION ROLLBACK (UNDO) REPORT        ");
+            System.out.println("============================================================");
+            System.out.printf(" Room Number       : %s%n", room.getRoomNo());
+            System.out.printf(" Room Type         : %s%n", room.getRoomType());
+            System.out.println("------------------------------------------------------------");
+            System.out.printf(" Staff ID          : %s%n", lastLog.getStaffId());
+            System.out.printf(" Action Undone     : %s -> %s%n", lastLog.getNewStatus(), lastLog.getPreviousStatus());
+            System.out.printf(" Task Timestamp    : %s%n", lastLog.getFormattedTime(lastLog.getStartTime()));
+            System.out.println("------------------------------------------------------------");
+            System.out.printf(" REVERTED STATUS   : %s%n", room.getStatus());
+            System.out.println(" REMARK            : Task log popped & removed via ADT removeLast()");
+            System.out.println("============================================================\n");
             return true;
         } else {
-            System.out.println("Error: Target room for rollback (" + lastLog.getRoomId() + ") was not found.");
+            System.out.println("\n============================================================");
+            System.out.println("          HOUSEKEEPING ACTION ROLLBACK (UNDO) REPORT        ");
+            System.out.println("============================================================");
+            System.out.println(" [!] Error: Target room (" + lastLog.getRoomId() + ") was not found.");
+            System.out.println("============================================================\n");
             return false;
         }
     }
@@ -238,17 +277,17 @@ public class HousekeepingControl {
     }
 
     public void displayOperationalReport() {
-        System.out.println("\n=========================================================================================");
-        System.out.println("                         HOUSEKEEPING TASK HISTORY REPORT                                ");
-        System.out.println("=========================================================================================");
+        System.out.println("\n===========================================================================================================================");
+        System.out.println("                                      HOUSEKEEPING TASK HISTORY REPORT                                                     ");
+        System.out.println("===========================================================================================================================");
         if (taskLogList.isEmpty()) {
             System.out.println(" (No task history entries recorded yet)");
         } else {
             int totalCount = taskLogList.size();
-            String border = "+---------+----------+--------------------------+----------+------------+------------+";
+            String border = "+---------+----------+--------------------------+----------+-----------------------+-----------------------+";
             
             System.out.println(border);
-            System.out.printf("| %-7s | %-8s | %-24s | %-8s | %-10s | %-10s |\n", 
+            System.out.printf("| %-7s | %-8s | %-24s | %-8s | %-21s | %-21s |\n", 
                     "Task ID", "Room No.", "Status", "Staff ID", "Start Time", "End Time");
             System.out.println(border);
 
@@ -256,7 +295,7 @@ public class HousekeepingControl {
                 RoomTaskLog log = taskLogList.get(i);
                 if (log != null) {
                     String taskId = String.format("HK%03d", i);
-                    System.out.printf("| %-7s | %-8s | %-24s | %-8s | %-10s | %-10s |\n", 
+                    System.out.printf("| %-7s | %-8s | %-24s | %-8s | %-21s | %-21s |\n", 
                             taskId, 
                             log.getRoomId(), 
                             log.getNewStatus(), 
@@ -269,6 +308,6 @@ public class HousekeepingControl {
             System.out.println(border);
             System.out.println(" Total tasks: " + totalCount);
         }
-        System.out.println("=========================================================================================\n");
+        System.out.println("===========================================================================================================================\n");
     }
 }

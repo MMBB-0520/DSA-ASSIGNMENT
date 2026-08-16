@@ -120,7 +120,30 @@ public class HousekeepingUI {
 
     private void inspectRoom() {
         System.out.println("\n--- Step 3: Supervisor Inspection ---");
-        System.out.print("Enter Room Number to inspect: ");
+
+        java.util.List<Room> cleanedRooms = new java.util.ArrayList<>();
+        for (Room r : controller.getAllRooms()) {
+            if (r.getStatus().toLowerCase().startsWith("cleaned")) {
+                cleanedRooms.add(r);
+            }
+        }
+
+        if (cleanedRooms.isEmpty()) {
+            System.out.println("\n[i] Notice: No rooms are currently waiting for inspection.");
+        } else {
+            System.out.println("\n=====================================================================");
+            System.out.println("            ROOMS DONE CLEANING & READY FOR INSPECTION               ");
+            System.out.println("=====================================================================");
+            System.out.printf("%-10s %-20s %-15s %-25s\n", "Room No.", "Room Type", "Price (RM)", "Current Status");
+            System.out.println("---------------------------------------------------------------------");
+            for (Room r : cleanedRooms) {
+                System.out.printf("%-10s %-20s %-15.2f %-25s\n", 
+                        r.getRoomNo(), r.getRoomType(), r.getPricePerNight(), r.getStatus());
+            }
+            System.out.println("=====================================================================");
+        }
+
+        System.out.print("\nEnter Room Number to inspect: ");
         String roomNo = scanner.nextLine().trim();
 
         Room room = controller.findRoom(roomNo);
@@ -129,8 +152,8 @@ public class HousekeepingUI {
             return;
         }
 
-        if (!room.getStatus().equalsIgnoreCase("Cleaned")) {
-            System.out.println("[!] Notice: Room " + roomNo + " is currently '" + room.getStatus() + "'. Only 'Cleaned' rooms can be inspected.");
+        if (!room.getStatus().toLowerCase().startsWith("cleaned")) {
+            System.out.println("[!] Notice: Room " + roomNo + " is currently '" + room.getStatus() + "'. Only cleaned rooms can be inspected.");
             return;
         }
 

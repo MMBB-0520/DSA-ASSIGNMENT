@@ -9,7 +9,7 @@
     "roomNo": "102",
     "roomType": "Standard",
     "pricePerNight": 150.0,
-    "status": "DIRTY"
+    "status": "INSPECTED"
   },
   {
     "roomNo": "103",
@@ -27,7 +27,7 @@
     "roomNo": "105",
     "roomType": "Standard",
     "pricePerNight": 150.0,
-    "status": "Cleaning In Progress"
+    "status": "INSPECTED"
   },
   {
     "roomNo": "106",
@@ -123,7 +123,7 @@
     "roomNo": "301",
     "roomType": "Suite",
     "pricePerNight": 400.0,
-    "status": "DIRTY"
+    "status": "Dirty"
   },
   {
     "roomNo": "302",

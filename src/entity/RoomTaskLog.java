@@ -53,7 +53,7 @@ public class RoomTaskLog {
     public String getFormattedTime(long timeMillis) {
         if (timeMillis == 0) return "In Progress";
         LocalDateTime dt = LocalDateTime.ofInstant(Instant.ofEpochMilli(timeMillis), ZoneId.systemDefault());
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss a");
         return dt.format(formatter);
     }
 
