@@ -6,14 +6,15 @@ import java.time.temporal.ChronoUnit;
 public class Booking implements Comparable<Booking> {
 
     public static final String STATUS_PENDING = "PENDING";
+    public static final String STATUS_RESERVED = "RESERVED";
     public static final String STATUS_CONFIRMED = "CONFIRMED";
     public static final String STATUS_CHECKED_IN = "CHECKED_IN";
     public static final String STATUS_CANCELLED = "CANCELLED";
     public static final String STATUS_COMPLETED = "COMPLETED";
 
-    public static final String PAYMENT_UNPAID = "UNPAID";
-    public static final String PAYMENT_PAID_CASH = "PAID (CASH)";
-    public static final String METHOD_CASH = "CASH";
+    public static final String PAYMENT_UNPAID = Bill.PAYMENT_UNPAID;
+    public static final String PAYMENT_PAID_CASH = Bill.PAYMENT_PAID_CASH;
+    public static final String METHOD_CASH = Bill.METHOD_CASH;
 
     private String confirmationNo;
     private Guest guest;
@@ -26,14 +27,8 @@ public class Booking implements Comparable<Booking> {
     private LocalDateTime registeredAt;
     private String status;
 
-    // Billing & Payment Attributes directly inside Booking
-    private String paymentStatus;
-    private String invoiceNo;
-    private String paymentMethod;
-    private double otherCharges;
-    private double cashTendered;
-    private double changeDue;
-    private int requestedLateOption;
+    // Billing composition
+    private Bill bill;
 
     public Booking(String confirmationNo, Guest guest, String roomType, double pricePerNight, int numGuests,
             LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime, LocalDateTime registeredAt) {
@@ -46,15 +41,21 @@ public class Booking implements Comparable<Booking> {
         this.checkOutDateTime = checkOutDateTime;
         this.registeredAt = registeredAt;
         this.status = STATUS_PENDING;
+        this.bill = new Bill("INV-" + (confirmationNo != null ? confirmationNo : "00000000"), pricePerNight, getNights());
+    }
 
-        // Default billing attributes
-        this.paymentStatus = PAYMENT_UNPAID;
-        this.paymentMethod = METHOD_CASH;
-        this.invoiceNo = "INV-" + (confirmationNo != null ? confirmationNo : "00000000");
-        this.otherCharges = 80.00;
-        this.cashTendered = 0.0;
-        this.changeDue = 0.0;
-        this.requestedLateOption = 0;
+    public Bill getBill() {
+        if (bill == null) {
+            bill = new Bill("INV-" + (confirmationNo != null ? confirmationNo : "00000000"), pricePerNight, getNights());
+        } else {
+            bill.setPricePerNight(pricePerNight);
+            bill.setNights(getNights());
+        }
+        return bill;
+    }
+
+    public void setBill(Bill bill) {
+        this.bill = bill;
     }
 
     public String getConfirmationNo() {
@@ -152,103 +153,52 @@ public class Booking implements Comparable<Booking> {
         return (int) Math.max(days, 1);
     }
 
-    // Billing & Payment Methods
-    public String getPaymentStatus() {
-        if (paymentStatus == null || paymentStatus.isEmpty()) return PAYMENT_UNPAID;
-        return paymentStatus;
-    }
-
-    public void setPaymentStatus(String paymentStatus) {
-        this.paymentStatus = paymentStatus;
-    }
-
-    public String getInvoiceNo() {
-        if (invoiceNo == null || invoiceNo.isEmpty()) return "INV-" + (confirmationNo != null ? confirmationNo : "00000000");
-        return invoiceNo;
-    }
-
-    public void setInvoiceNo(String invoiceNo) {
-        this.invoiceNo = invoiceNo;
-    }
-
-    public String getPaymentMethod() {
-        if (paymentMethod == null || paymentMethod.isEmpty()) return METHOD_CASH;
-        return paymentMethod;
-    }
-
-    public void setPaymentMethod(String paymentMethod) {
-        this.paymentMethod = paymentMethod;
-    }
-
-    public double getOtherCharges() {
-        return otherCharges;
-    }
-
-    public void setOtherCharges(double otherCharges) {
-        this.otherCharges = otherCharges;
-    }
-
-    public double getCashTendered() {
-        return cashTendered;
-    }
-
-    public void setCashTendered(double cashTendered) {
-        this.cashTendered = cashTendered;
-    }
-
-    public double getChangeDue() {
-        return changeDue;
-    }
-
-    public void setChangeDue(double changeDue) {
-        this.changeDue = changeDue;
-    }
-
-    public double getRoomCharge() {
-        return getPricePerNight() * getNights();
-    }
-
-    public double getServiceCharge() {
-        return getRoomCharge() * 0.10;
-    }
-
-    public double getGrandTotal() {
-        return getRoomCharge() + getServiceCharge() + getOtherCharges();
-    }
-
-    public double getTotalPrice() {
-        return getGrandTotal();
-    }
-
-    public double getBookingDeposit() {
-        return getRoomCharge() * 0.30;
-    }
-
-    public double getSecurityDeposit() {
-        return 200.00;
-    }
-
-    public double getTotalCheckInDeposit() {
-        return getBookingDeposit() + getSecurityDeposit();
-    }
-
-    public boolean processCashPayment(double cashTendered) {
-        if (cashTendered < getGrandTotal()) {
-            return false;
+    /**
+     * Determines late check-out option automatically
+     */
+    public int determineLateCheckOutOption() {
+        if (getBill().getRequestedLateOption() > 0) {
+            return getBill().getRequestedLateOption();
         }
-        this.cashTendered = cashTendered;
-        this.changeDue = cashTendered - getGrandTotal();
-        this.paymentStatus = PAYMENT_PAID_CASH;
-        this.paymentMethod = METHOD_CASH;
-        return true;
+        if (this.checkOutDateTime == null) {
+            return 0;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (!now.isAfter(this.checkOutDateTime)) {
+            return 0; // On time / Grace Period
+        }
+
+        long minutesOver = ChronoUnit.MINUTES.between(this.checkOutDateTime, now);
+
+        if (minutesOver <= 30) {
+            return 0; // <= 30 mins: Grace Period (Free)
+        } else if (minutesOver <= 120) {
+            return 1; // 30 mins - 2 hours: +25%
+        } else if (minutesOver <= 240) {
+            return 2; // 2 - 4 hours: +50%
+        } else {
+            return 3; // > 4 hours: +100% (Extra 1 night fee charged as Late Charge)
+        }
     }
 
-    public int getRequestedLateOption() {
-        return requestedLateOption;
+    /**
+     * Calculates Late Check-Out Charge based on lateOption
+     */
+    public double calculateLateCheckOutCharge(int lateOption) {
+        return switch (lateOption) {
+            case 1 -> getPricePerNight() * 0.25;
+            case 2 -> getPricePerNight() * 0.50;
+            case 3 -> getPricePerNight() * 1.00;
+            default -> 0.0;
+        };
     }
 
-    public void setRequestedLateOption(int requestedLateOption) {
-        this.requestedLateOption = requestedLateOption;
+    /**
+     * Computes the effective late check-out charge for this booking.
+     */
+    public double getLateCheckOutCharge() {
+        return calculateLateCheckOutCharge(determineLateCheckOutOption());
     }
 
     @Override
@@ -264,8 +214,10 @@ public class Booking implements Comparable<Booking> {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
         Booking booking = (Booking) obj;
         return confirmationNo != null && confirmationNo.equals(booking.confirmationNo);
     }
@@ -277,6 +229,6 @@ public class Booking implements Comparable<Booking> {
         return String.format(
                 "Booking[%s] Guest=%s Room=%s Guests=%d CheckIn=%s CheckOut=%s Nights=%d Total=RM%.2f Status=%s Payment=%s",
                 confirmationNo, guestName, roomInfo, numGuests, checkInDateTime, checkOutDateTime,
-                getNights(), getTotalPrice(), status, getPaymentStatus());
+                getNights(), getBill().getGrandTotal(), status, getBill().getPaymentStatus());
     }
 }
