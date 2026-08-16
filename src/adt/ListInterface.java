@@ -1,5 +1,7 @@
 package adt;
 
+import java.util.Iterator;
+
 public interface ListInterface<T> {
 
     // HU QIAO FENG
@@ -33,5 +35,5 @@ public interface ListInterface<T> {
     // into a BST (Non-linear ADT) for building a fast search index.
     Object[] toArray();
 
-    java.util.Iterator<T> getIterator();
+    Iterator<T> getIterator();
 }

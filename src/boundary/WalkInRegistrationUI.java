@@ -27,18 +27,6 @@ public class WalkInRegistrationUI {
     }
 
     public void runMenu() {
-        System.out.println("\n--- Front Desk Staff Login ---");
-        System.out.print("Enter Staff ID (e.g. F001): ");
-        String id = sc.nextLine().trim();
-        System.out.print("Enter Password: ");
-        String pwd = sc.nextLine().trim();
-        
-        Staff staff = StaffControl.authenticate(id, pwd, "Front Desk");
-        if (staff == null) {
-            System.out.println("Access Denied. Returning to Main Menu.");
-            return;
-        }
-        System.out.println("Welcome, " + staff.getName() + "!");
 
         int choice;
         do {
@@ -133,7 +121,7 @@ public class WalkInRegistrationUI {
         }
 
         Booking booking = control.registerBooking(name, contact, icPassport, roomType, numGuests, checkIn, checkOut);
-        System.out.printf("Registered: %s (Total: RM%.2f)%n", booking, booking.getTotalPrice());
+        System.out.printf("Registered: %s (Total: RM%.2f)%n", booking, booking.getBill().getGrandTotal());
     }
 
     private String promptRoomType() {
@@ -276,7 +264,7 @@ public class WalkInRegistrationUI {
         printTable(filtered);
         double total = 0;
         for (Booking b : filtered) {
-            total += b.getTotalPrice();
+            total += b.getBill().getGrandTotal();
         }
         System.out.printf("Subtotal for %s: RM%.2f%n", roomType, total);
     }
@@ -291,7 +279,7 @@ public class WalkInRegistrationUI {
                     b.getConfirmationNo(), b.getGuest().getGuestName(), b.getRoomType(), b.getNumGuests(),
                     b.getCheckInDateTime().toString().replace("T", " "),
                     b.getCheckOutDateTime().toString().replace("T", " "),
-                    b.getNights(), b.getTotalPrice(), b.getStatus());
+                    b.getNights(), b.getBill().getGrandTotal(), b.getStatus());
         }
         System.out.println(TABLE_LINE);
     }

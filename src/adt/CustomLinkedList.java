@@ -79,10 +79,6 @@ public class CustomLinkedList<T> implements ListInterface<T>, Iterable<T> {
         numberOfEntries = 0;
     }
 
-    // =============================================================
-    // 二、 Member 2 贡献的基础方法 (Housekeeping 模块)
-    // =============================================================
-
     @Override
     public T remove(int givenPosition) {
         if (givenPosition < 1 || givenPosition > numberOfEntries) {
@@ -106,7 +102,7 @@ public class CustomLinkedList<T> implements ListInterface<T>, Iterable<T> {
     public boolean remove(T anEntry) {
         int index = indexOf(anEntry);
         if (index != -1) {
-            remove(index + 1); // 转换为 1-based index
+            remove(index + 1);
             return true;
         }
         return false;
@@ -124,10 +120,6 @@ public class CustomLinkedList<T> implements ListInterface<T>, Iterable<T> {
     public int size() {
         return numberOfEntries;
     }
-
-    // =============================================================
-    // 三、 Member 3 贡献的基础方法 (Front-Desk 模块)
-    // =============================================================
 
     @Override
     public boolean set(int givenPosition, T newEntry) {
