@@ -178,7 +178,7 @@ public class WalkInRegistrationControl {
         if (next != null) {
             next.setRoomNo(room.getRoomNo());
             next.setStatus(Booking.STATUS_CONFIRMED);
-            room.setStatus(Room.STATUS_BOOKED);
+            room.setStatus("Occupied");
             processedLog.enqueue(next);
 
             roomDAO.saveAllRooms(rooms);
@@ -224,7 +224,7 @@ public class WalkInRegistrationControl {
     public double getTotalQueueRevenue() {
         double total = 0;
         for (Booking b : viewQueue()) {
-            total += b.getTotalPrice();
+            total += b.getBill().getGrandTotal();
         }
         return total;
     }

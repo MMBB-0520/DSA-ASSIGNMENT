@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "guestId": "G1001",
+    "guestName": "Alice Johnson",
+    "contactNumber": "0123456789",
+    "icPassport": "950101-14-5566"
+  },
+  {
+    "guestId": "G1003",
+    "guestName": "Charlie Tan",
+    "contactNumber": "0112233445",
+    "icPassport": "900812-10-1234"
+  },
+  {
+    "guestId": "G1002",
+    "guestName": "Bob Smith",
+    "contactNumber": "0198765432",
+    "icPassport": "A12345678"
+  },
+  {
+    "guestId": "G1004",
+    "guestName": "Adam",
+    "contactNumber": "0123456789",
+    "icPassport": "000223125033"
+  },
+  {
+    "guestId": "G1005",
+    "guestName": "Sabrina",
+    "contactNumber": "0147435699",
+    "icPassport": "031230145278"
+  }
+]
