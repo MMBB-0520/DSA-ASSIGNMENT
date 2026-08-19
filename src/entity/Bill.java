@@ -9,7 +9,7 @@ package entity;
 public class Bill {
 
     public static final String PAYMENT_UNPAID = "UNPAID";
-    public static final String PAYMENT_PAID_CASH = "PAID (CASH)";
+    public static final String PAYMENT_PAID_CASH = "PAID";
     public static final String METHOD_CASH = "CASH";
 
     private String invoiceNo;
@@ -34,7 +34,6 @@ public class Bill {
         this.invoiceNo = (invoiceNo != null) ? invoiceNo : "INV-00000000";
         this.pricePerNight = pricePerNight;
         this.nights = Math.max(nights, 1);
-        this.paymentStatus = PAYMENT_UNPAID;
         this.paymentMethod = METHOD_CASH;
         this.otherCharges = 80.00;
         this.cashTendered = 0.0;
@@ -187,6 +186,16 @@ public class Bill {
         this.paymentStatus = PAYMENT_PAID_CASH;
         this.paymentMethod = METHOD_CASH;
         return true;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
+        Bill bill = (Bill) obj;
+        return invoiceNo != null && invoiceNo.equalsIgnoreCase(bill.invoiceNo);
     }
 
     @Override

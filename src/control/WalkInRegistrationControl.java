@@ -3,6 +3,8 @@ package control;
 import adt.MyQueue;
 import adt.BSTInterface;
 import adt.MyBinarySearchTree;
+import adt.ListInterface;
+import adt.CustomLinkedList;
 import dao.BookingDAO;
 import dao.GuestDAO;
 import dao.RoomDAO;
@@ -178,7 +180,7 @@ public class WalkInRegistrationControl {
         if (next != null) {
             next.setRoomNo(room.getRoomNo());
             next.setStatus(Booking.STATUS_CONFIRMED);
-            room.setStatus("Occupied");
+            room.setStatus(Room.STATUS_BOOKED);
             processedLog.enqueue(next);
 
             roomDAO.saveAllRooms(rooms);
@@ -268,6 +270,38 @@ public class WalkInRegistrationControl {
     public Room getAvailableRoom(String roomType) {
         for (Room room : rooms) {
             if (room.getRoomType().equalsIgnoreCase(roomType) && room.getStatus().equals(Room.STATUS_AVAILABLE)) {
+                return room;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns every currently available room of the given room type, using the
+     * CustomLinkedList Linear ADT (consistent with FrontDeskServiceControl /
+     * HousekeepingControl). Lets Walk-In staff manually pick a specific room
+     * instead of always auto-assigning the first match.
+     */
+    public ListInterface<Room> getAvailableRoomsByType(String roomType) {
+        ListInterface<Room> availableList = new CustomLinkedList<>();
+        for (Room room : rooms) {
+            if (room.getRoomType().equalsIgnoreCase(roomType) && room.getStatus().equals(Room.STATUS_AVAILABLE)) {
+                availableList.add(room);
+            }
+        }
+        return availableList;
+    }
+
+    /**
+     * Finds a specific available room by room number (used for manual room
+     * assignment). Returns null if the room doesn't exist, isn't the requested
+     * type, or isn't currently available.
+     */
+    public Room getAvailableRoomByRoomNo(String roomType, String roomNo) {
+        ListInterface<Room> availableList = getAvailableRoomsByType(roomType);
+        for (int i = 0; i < availableList.size(); i++) {
+            Room room = availableList.get(i);
+            if (room.getRoomNo().equalsIgnoreCase(roomNo)) {
                 return room;
             }
         }

@@ -122,14 +122,6 @@ public class CustomLinkedList<T> implements ListInterface<T>, Iterable<T> {
     }
 
     @Override
-    public T removeLast() {
-        if (isEmpty()) {
-            return null;
-        }
-        return remove(numberOfEntries);
-    }
-
-    @Override
     public boolean set(int givenPosition, T newEntry) {
         if (givenPosition < 1 || givenPosition > numberOfEntries) {
             return false;
@@ -161,7 +153,35 @@ public class CustomLinkedList<T> implements ListInterface<T>, Iterable<T> {
         }
         return -1;
     }
+    
+    /**
+     * [add-on method] HU QIAO FENG: Removes and returns the first entry (mirrors removeLast();
+     * used in Walk-In Registration to pop the front room off a temporary
+     * available-rooms list when auto-assigning).
+     */
+    @Override
+    public T removeFirst() {
+        if (isEmpty()) {
+            return null;
+        }
+        return remove(1);
+    }
+    
+    /**
+     * [add-on method] PANG JIA YIE: Removes and returns the last entry (used for Rollback / Undo in Housekeeping)
+     */
+    @Override
+    public T removeLast() {
+        if (isEmpty()) {
+            return null;
+        }
+        return remove(numberOfEntries);
+    }
 
+    /**
+     * [add-on method] NG YUEN QI: Exporting as a raw array facilitates importing
+     * into a BST (Non-linear ADT) for building a fast search index.
+     */
     @Override
     public Object[] toArray() {
         Object[] result = new Object[numberOfEntries];

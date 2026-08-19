@@ -16,6 +16,8 @@ import util.InputUtil;
  * 1. Instant Guest & Booking Search by Confirmation Number
  * 2. Search & Filter Available Rooms (Iterate -> Filter -> Sort pipeline)
  * 3. Search Bill & Process Cash Payment
+ *
+ * @author Ng Yuen Qi
  */
 public class FrontDeskServiceUI {
 
@@ -393,8 +395,8 @@ public class FrontDeskServiceUI {
         System.out.printf(" Room Type         : %s (Base Rate: RM %.2f / night)%n", roomType, pricePerNight);
         System.out.printf(" Duration          : %s to %s (%d Night(s))%n", checkIn.format(DATETIME_FORMAT),
                 checkOut.format(DATETIME_FORMAT), nights);
-        System.out.printf(" Est. Room Charge  : RM %10.2f%n", roomChargeTotal);
-        System.out.printf(" 30%% Deposit Due    : RM %10.2f  (Base Deposit)%n", depositRequired);
+        System.out.printf(" %-65s RM %10.2f%n", "Est. Room Charge", roomChargeTotal);
+        System.out.printf(" %-65s RM %10.2f%n", "30% Deposit Due", depositRequired);
         System.out.println(SUB_DIVIDER);
 
         double cashTendered = InputUtil.readDoubleMin(scanner,
@@ -409,9 +411,9 @@ public class FrontDeskServiceUI {
         System.out.println(DIVIDER);
         System.out.printf("  Confirmation No   : %s%n", booking.getConfirmationNo());
         System.out.printf("  Booking Status    : %s%n", booking.getStatus());
-        System.out.printf("  Deposit Paid      : RM %10.2f%n", depositRequired);
-        System.out.printf("  Cash Received     : RM %10.2f%n", cashTendered);
-        System.out.printf("  Change Due        : RM %10.2f%n", change);
+        System.out.printf(" %-65s RM %10.2f%n", "30% Deposit Due", depositRequired);
+        System.out.printf(" %-65s RM %10.2f%n", "Cash Received", cashTendered);
+        System.out.printf(" %-65s RM %10.2f%n", "Change Due", change);
         System.out.println(DIVIDER);
     }
 
@@ -629,8 +631,8 @@ public class FrontDeskServiceUI {
             System.out.println(SUB_DIVIDER);
             System.out.printf("  Confirmation No   : %s%n", booking.getConfirmationNo());
             System.out.printf("  New Booking Status: %s%n", Booking.STATUS_CHECKED_IN);
-            System.out.printf("  Deposit Recv'd Now: RM %10.2f%n", cashTendered);
-            System.out.printf("  Change Returned   : RM %10.2f%n", change);
+            System.out.printf(" %-65s RM %10.2f%n", "Deposit Received Now", cashTendered);
+            System.out.printf(" %-65s RM %10.2f%n", "Change Returned", change);
             System.out.println(SUB_DIVIDER);
         } else {
             System.out.println("\n[!] Check-in processing error.");
@@ -656,44 +658,50 @@ public class FrontDeskServiceUI {
         System.out.println("    - Time Complexity: O(log n) Average Lookup / O(log n) Average Insertion");
         System.out.println(" Total Records Count : " + control.getTotalIndexedCount() + " indexed booking(s)");
 
-        // Delegate analytics aggregation calculation to Control service
-        FrontDeskServiceControl.AnalyticsSummary summary = control.generateAnalyticsSummary();
-
         System.out.println(DIVIDER);
         System.out.println(" SYSTEM SUMMARY & ANALYTICS REPORT (Collection ADT Evaluation)");
         System.out.println(DIVIDER);
-        System.out.printf("  Total Bookings       : %d booking(s)%n", summary.totalBookings);
-        System.out.printf("  Total System Revenue : RM %.2f%n", summary.grandTotalRevenue);
-        System.out.printf("  Average Booking Value: RM %.2f%n", summary.avgRevenue);
-        System.out.printf("  Average Stay Duration: %.1f night(s)%n", summary.avgNights);
+        System.out.printf("  Total Bookings       : %d booking(s)%n", control.getTotalBookingsCount());
+        System.out.printf("  Total System Revenue : RM %.2f%n", control.getGrandTotalRevenue());
+        System.out.printf("  Average Booking Value: RM %.2f%n", control.getAverageRevenuePerBooking());
+        System.out.printf("  Average Stay Duration: %.1f night(s)%n", control.getAverageStayNights());
         System.out.println(SUB_DIVIDER);
         System.out.println(" BST BOUNDS ANALYSIS (getMin() / getMax() Operations):");
-        System.out.printf("  - Min Confirmation No: %s (%s - RM %.2f)%n",
-                (summary.minBooking != null ? summary.minBooking.getConfirmationNo() : "N/A"),
-                (summary.minBooking != null && summary.minBooking.getGuest() != null
-                        ? summary.minBooking.getGuest().getGuestName()
-                        : "N/A"),
-                (summary.minBooking != null ? summary.minBooking.getBill().getGrandTotal() : 0.0));
-        System.out.printf("  - Max Confirmation No: %s (%s - RM %.2f)%n",
-                (summary.maxBooking != null ? summary.maxBooking.getConfirmationNo() : "N/A"),
-                (summary.maxBooking != null && summary.maxBooking.getGuest() != null
-                        ? summary.maxBooking.getGuest().getGuestName()
-                        : "N/A"),
-                (summary.maxBooking != null ? summary.maxBooking.getBill().getGrandTotal() : 0.0));
+
+        Booking minBooking = control.getMinBooking();
+        if (minBooking != null) {
+            Guest g = minBooking.getGuest();
+            String guestName = (g != null) ? g.getGuestName() : "N/A";
+            System.out.printf("  - Min Confirmation No: %s (%s - RM %.2f)%n",
+                    minBooking.getConfirmationNo(), guestName, minBooking.getBill().getGrandTotal());
+        } else {
+            System.out.println("  - Min Confirmation No: N/A");
+        }
+
+        Booking maxBooking = control.getMaxBooking();
+        if (maxBooking != null) {
+            Guest g = maxBooking.getGuest();
+            String guestName = (g != null) ? g.getGuestName() : "N/A";
+            System.out.printf("  - Max Confirmation No: %s (%s - RM %.2f)%n",
+                    maxBooking.getConfirmationNo(), guestName, maxBooking.getBill().getGrandTotal());
+        } else {
+            System.out.println("  - Max Confirmation No: N/A");
+        }
+
         System.out.println(SUB_DIVIDER);
         System.out.println(" CATEGORY BREAKDOWN BY ROOM TYPE:");
-        System.out.printf("  - Standard Rooms     : %2d booking(s) | Revenue: RM %8.2f%n", summary.standardCount,
-                summary.standardRev);
-        System.out.printf("  - Deluxe Rooms       : %2d booking(s) | Revenue: RM %8.2f%n", summary.deluxeCount,
-                summary.deluxeRev);
-        System.out.printf("  - Suite Rooms        : %2d booking(s) | Revenue: RM %8.2f%n", summary.suiteCount,
-                summary.suiteRev);
+        System.out.printf("  - Standard Rooms     : %2d booking(s) | Revenue: RM %8.2f%n",
+                control.getBookingCountByRoomType("Standard"), control.getRevenueByRoomType("Standard"));
+        System.out.printf("  - Deluxe Rooms       : %2d booking(s) | Revenue: RM %8.2f%n",
+                control.getBookingCountByRoomType("Deluxe"), control.getRevenueByRoomType("Deluxe"));
+        System.out.printf("  - Suite Rooms        : %2d booking(s) | Revenue: RM %8.2f%n",
+                control.getBookingCountByRoomType("Suite"), control.getRevenueByRoomType("Suite"));
         System.out.println(SUB_DIVIDER);
         System.out.println(" BOOKING STATUS SUMMARY:");
-        System.out.printf("  - Confirmed Bookings : %d%n", summary.confirmedCount);
-        System.out.printf("  - Reserved (Future)  : %d%n", summary.reservedCount);
-        System.out.printf("  - Pending (Queue)    : %d%n", summary.pendingCount);
-        System.out.printf("  - Paid (Cash)        : %d%n", summary.paidCount);
+        System.out.printf("  - Confirmed Bookings : %d%n", control.getBookingCountByStatus(Booking.STATUS_CONFIRMED));
+        System.out.printf("  - Reserved (Future)  : %d%n", control.getBookingCountByStatus(Booking.STATUS_RESERVED));
+        System.out.printf("  - Pending (Queue)    : %d%n", control.getBookingCountByStatus(Booking.STATUS_PENDING));
+        System.out.printf("  - Paid (Cash)        : %d%n", control.getPaidBookingCount());
         System.out.println(DIVIDER);
     }
 }

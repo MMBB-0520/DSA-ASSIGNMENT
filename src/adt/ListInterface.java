@@ -2,9 +2,8 @@ package adt;
 
 import java.util.Iterator;
 
-public interface ListInterface<T> {
+public interface ListInterface<T> extends Iterable<T> {
 
-    // HU QIAO FENG
     boolean add(T newEntry);
 
     boolean add(int newPosition, T newEntry);
@@ -13,7 +12,6 @@ public interface ListInterface<T> {
 
     void clear();
 
-    // PANG JIA YIE
     T remove(int givenPosition);
 
     boolean remove(T anEntry);
@@ -22,10 +20,6 @@ public interface ListInterface<T> {
 
     int size();
 
-    // [add-on method] PANG JIA YIE: Removes and returns the last entry (used for Rollback / Undo in Housekeeping)
-    T removeLast();
-
-    // NG YUEN QI
     boolean set(int givenPosition, T newEntry);
 
     boolean contains(T anEntry);
@@ -34,8 +28,10 @@ public interface ListInterface<T> {
 
     String toString();
 
-    // [add-on method] NG YUEN QI: Exporting as a raw array facilitates importing
-    // into a BST (Non-linear ADT) for building a fast search index.
+    T removeFirst();
+
+    T removeLast();
+
     Object[] toArray();
 
     Iterator<T> getIterator();
