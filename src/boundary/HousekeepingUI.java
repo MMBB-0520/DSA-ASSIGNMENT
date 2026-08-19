@@ -42,7 +42,7 @@ public class HousekeepingUI {
         System.out.println("\n**************************************************");
         System.out.println("*              HOUSEKEEPING MODULE               *");
         System.out.println("**************************************************");
-        System.out.println("* 1. View Room Status                            *");
+        System.out.println("* 1. View Dirty Rooms (Awaiting Cleaning)          *");
         System.out.println("* 2. Start Cleaning (Dirty -> In Progress)       *");
         System.out.println("* 3. Complete Cleaning (In Progress -> Cleaned)  *");
         System.out.println("* 4. Inspect Room & Mark Ready for Check-In      *");
@@ -54,19 +54,25 @@ public class HousekeepingUI {
     }
 
     /**
-     * Displays current housekeeping room status.
+     * Displays rooms with status 'Dirty' (checked-out rooms ready to be cleaned by housekeepers).
      */
     private void viewRoomsStatus() {
-        System.out.println("\n=====================================================================");
-        System.out.println("                   CURRENT ROOM HOUSEKEEPING STATUS                   ");
-        System.out.println("=====================================================================");
-        System.out.printf("%-10s %-20s %-15s %-20s\n", "Room No.", "Room Type", "Price (RM)", "Current Status");
-        System.out.println("---------------------------------------------------------------------");
-        for (Room r : controller.getAllRoomsArray()) {
-            System.out.printf("%-10s %-20s %-15.2f %-20s\n", 
-                    r.getRoomNo(), r.getRoomType(), r.getPricePerNight(), r.getStatus());
+        System.out.println("\n===============================================================================");
+        System.out.println("                 DIRTY ROOMS AWAITING HOUSEKEEPING CLEANING                    ");
+        System.out.println("===============================================================================");
+        System.out.printf("%-10s %-20s %-15s %-18s %-15s\n", "Room No.", "Room Type", "Price (RM)", "Current Status", "Std Duration");
+        System.out.println("-------------------------------------------------------------------------------");
+        Room[] dirtyRooms = controller.getDirtyRooms();
+        if (dirtyRooms.length == 0) {
+            System.out.println(" [i] Notice: No dirty rooms found. All rooms are clean or currently occupied!");
+        } else {
+            for (Room r : dirtyRooms) {
+                int stdMins = controller.getStandardCleaningDurationMinutes(r.getRoomType());
+                System.out.printf("%-10s %-20s %-15.2f %-18s %-15s\n", 
+                        r.getRoomNo(), r.getRoomType(), r.getPricePerNight(), r.getStatus(), stdMins + " mins");
+            }
         }
-        System.out.println("=====================================================================\n");
+        System.out.println("===============================================================================\n");
     }
 
     private void startCleaning() {

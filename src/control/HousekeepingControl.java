@@ -26,10 +26,49 @@ public class HousekeepingControl {
 
     private void initSampleTaskLogs() {
         if (taskLogList.isEmpty()) {
-            RoomTaskLog log105 = new RoomTaskLog("105", "Cleaned", "Inspected", "SP001");
-            log105.setEndTime(System.currentTimeMillis());
-            taskLogList.add(log105);
-            undoStack.push(log105);
+            long now = System.currentTimeMillis();
+            long min = 60 * 1000L;
+            long hour = 3600 * 1000L;
+
+            // Scenario 1: Standard Room - Completed on time & Approved by Supervisor (Pass)
+            RoomTaskLog log1 = new RoomTaskLog("101", "Standard", "Cleaned", "Inspected", "SP001", 30);
+            log1.setStartTime(now - 2 * hour);
+            log1.setEndTime(now - 2 * hour + 25 * min);
+            log1.setPenaltyFine(0.0);
+            taskLogList.add(log1);
+            undoStack.push(log1);
+
+            // Scenario 2: Deluxe Room - Exceeded Target Duration (Late Penalty Fine Charged)
+            RoomTaskLog log2 = new RoomTaskLog("203", "Deluxe", "Cleaning In Progress", "Cleaned", "S002", 40);
+            log2.setStartTime(now - 90 * min);
+            log2.setEndTime(now - 25 * min); // Took 65 mins (25 mins overdue -> RM 20.00 fine)
+            log2.setPenaltyFine(20.0);
+            taskLogList.add(log2);
+            undoStack.push(log2);
+
+            // Scenario 3: Suite Room - Failed Supervisor Inspection (Rejected & Reverted to Dirty)
+            RoomTaskLog log3 = new RoomTaskLog("301", "Suite", "Cleaned", "Inspected (Failed)", "SP002", 45);
+            log3.setStartTime(now - 50 * min);
+            log3.setEndTime(now - 45 * min);
+            log3.setPenaltyFine(0.0);
+            taskLogList.add(log3);
+            undoStack.push(log3);
+
+            // Scenario 4: Suite Room - Cleaning Currently In Progress
+            RoomTaskLog log4 = new RoomTaskLog("302", "Suite", "Dirty", "Cleaning In Progress", "S003", 45);
+            log4.setStartTime(now - 15 * min);
+            log4.setEndTime(0); // 0 = In Progress
+            log4.setPenaltyFine(0.0);
+            taskLogList.add(log4);
+            undoStack.push(log4);
+
+            // Scenario 5: Standard Room - Inspected & Approved
+            RoomTaskLog log5 = new RoomTaskLog("105", "Standard", "Cleaned", "Inspected", "SP001", 30);
+            log5.setStartTime(now - 10 * min);
+            log5.setEndTime(now - 10 * min);
+            log5.setPenaltyFine(0.0);
+            taskLogList.add(log5);
+            undoStack.push(log5);
         }
     }
 
@@ -38,6 +77,7 @@ public class HousekeepingControl {
      * Uses CustomLinkedList (Linear ADT) instead of java.util.ArrayList.
      */
     private void loadRoomsFromData() {
+        roomList.clear();
         Room[] loaded = roomDAO.getAllRooms();
         if (loaded != null && loaded.length > 0) {
             for (Room r : loaded) {
@@ -51,6 +91,27 @@ public class HousekeepingControl {
             roomList.add(new Room("104", "Ocean View", 300.0, "Inspected"));
             roomList.add(new Room("105", "Presidents Suite", 800.0, "Ready for Check-In"));
         }
+    }
+
+    /**
+     * Filters and returns rooms with status 'Dirty' (checked-out rooms ready for cleaning)
+     * using CustomLinkedList (Linear ADT).
+     */
+    public Room[] getDirtyRooms() {
+        loadRoomsFromData(); // Always refresh latest room status from RoomDAO / rooms.json
+        ListInterface<Room> dirtyList = new CustomLinkedList<>();
+        for (int i = 1; i <= roomList.size(); i++) {
+            Room r = roomList.get(i);
+            if (r != null && r.getStatus().equalsIgnoreCase("Dirty")) {
+                dirtyList.add(r);
+            }
+        }
+        Object[] rawArray = dirtyList.toArray();
+        Room[] result = new Room[rawArray.length];
+        for (int i = 0; i < rawArray.length; i++) {
+            result[i] = (Room) rawArray[i];
+        }
+        return result;
     }
 
     /**
@@ -119,6 +180,24 @@ public class HousekeepingControl {
         return null;
     }
 
+    /**
+     * Calculates standard target cleaning duration in minutes based on room type:
+     * - Standard: 30 minutes
+     * - Deluxe: 40 minutes
+     * - Suite: 45 minutes
+     */
+    public int getStandardCleaningDurationMinutes(String roomType) {
+        if (roomType == null) return 30;
+        String type = roomType.trim().toLowerCase();
+        if (type.contains("deluxe")) {
+            return 40;
+        } else if (type.contains("suite")) {
+            return 45;
+        } else {
+            return 30; // Standard room
+        }
+    }
+
     public boolean assignCleaning(String roomId, String staffId) {
         Room room = findRoom(roomId);
         if (room == null) {
@@ -136,12 +215,31 @@ public class HousekeepingControl {
         room.setStatus(nextStatus);
         saveRoomsToData();
         
-        RoomTaskLog log = new RoomTaskLog(roomId, currentStatus, nextStatus, staffId);
+        int targetMins = getStandardCleaningDurationMinutes(room.getRoomType());
+        RoomTaskLog log = new RoomTaskLog(roomId, room.getRoomType(), currentStatus, nextStatus, staffId, targetMins);
         taskLogList.add(log);        // Add to list (for reporting)
         undoStack.push(log);         // Push to stack (for undo/rollback - LIFO)
         
-        System.out.println("Success: Assigned Room " + roomId + " to Housekeeper " + staffId + ". Status: " + nextStatus);
+        System.out.println("\n[√] CLEANING ASSIGNED SUCCESSFULLY:");
+        System.out.println("    Room Number       : " + roomId + " (" + room.getRoomType() + ")");
+        System.out.println("    Housekeeper ID    : " + staffId);
+        System.out.println("    Current Status    : " + nextStatus);
+        System.out.println("    Target Duration   : " + targetMins + " minutes");
+        System.out.println("    Expected End Time : " + log.getFormattedTime(log.getExpectedEndTimeMillis()));
         return true;
+    }
+
+    /**
+     * Calculates penalty fine for housekeeper when cleaning exceeds the target duration.
+     * Rate: RM 10.00 for every 15 minutes overdue.
+     */
+    public double calculatePenaltyFine(long actualMinutes, int targetMinutes) {
+        if (actualMinutes <= targetMinutes) {
+            return 0.0;
+        }
+        long overdueMinutes = actualMinutes - targetMinutes;
+        long blocks = (long) Math.ceil(overdueMinutes / 15.0);
+        return blocks * 10.0;
     }
 
     public boolean completeCleaning(String roomId, String staffId) {
@@ -174,13 +272,30 @@ public class HousekeepingControl {
             activeLog.setNewStatus(logStatus);
             activeLog.setEndTime(System.currentTimeMillis());
         } else {
-            RoomTaskLog log = new RoomTaskLog(roomId, "Cleaning In Progress", logStatus, staffId);
+            int durationMins = getStandardCleaningDurationMinutes(room.getRoomType());
+            RoomTaskLog log = new RoomTaskLog(roomId, room.getRoomType(), "Cleaning In Progress", logStatus, staffId, durationMins);
             log.setEndTime(System.currentTimeMillis());
             taskLogList.add(log);
             undoStack.push(log);
+            activeLog = log;
         }
 
-        System.out.println("Success: Room " + roomId + " cleaning completed by Housekeeper " + staffId + ". Status: " + roomStatus);
+        long actualMins = Math.max(0, (activeLog.getEndTime() - activeLog.getStartTime()) / (60 * 1000L));
+        double fine = calculatePenaltyFine(actualMins, activeLog.getEstimatedDurationMinutes());
+        activeLog.setPenaltyFine(fine);
+
+        System.out.println("\n[√] CLEANING COMPLETED:");
+        System.out.println("    Room Number       : " + roomId + " (" + room.getRoomType() + ")");
+        System.out.println("    Housekeeper ID    : " + staffId);
+        System.out.println("    New Room Status   : " + roomStatus);
+        System.out.println("    Target Duration   : " + activeLog.getEstimatedDurationMinutes() + " minutes");
+        System.out.println("    Actual Time Taken : " + actualMins + " minute(s)");
+        if (fine > 0) {
+            long overdueMins = actualMins - activeLog.getEstimatedDurationMinutes();
+            System.out.printf("    [!] LATE PENALTY  : RM %.2f (Exceeded target duration by %d mins)%n", fine, overdueMins);
+        } else {
+            System.out.println("    Performance       : COMPLETED ON TIME (RM 0.00 fine)");
+        }
         return true;
     }
 
@@ -223,12 +338,13 @@ public class HousekeepingControl {
         room.setStatus(roomNextStatus);
         saveRoomsToData();
 
+        int targetMins = getStandardCleaningDurationMinutes(room.getRoomType());
         // Update the existing task log directly so Task ID remains the same
         RoomTaskLog activeLog = findLogByRoomAndStatus(roomId, "Cleaned");
         if (activeLog != null) {
             activeLog.setNewStatus(logStatus);
         } else {
-            RoomTaskLog log = new RoomTaskLog(roomId, "Cleaned", logStatus, supervisorId);
+            RoomTaskLog log = new RoomTaskLog(roomId, room.getRoomType(), "Cleaned", logStatus, supervisorId, targetMins);
             log.setEndTime(System.currentTimeMillis());
             taskLogList.add(log);
             undoStack.push(log);
@@ -241,7 +357,7 @@ public class HousekeepingControl {
         System.out.println("            SUPERVISOR ROOM INSPECTION REPORT               ");
         System.out.println("============================================================");
         System.out.printf(" Room Number       : %s%n", room.getRoomNo());
-        System.out.printf(" Room Type         : %s%n", room.getRoomType());
+        System.out.printf(" Room Type         : %s (Standard Cleaning: %d mins)%n", room.getRoomType(), targetMins);
         System.out.printf(" Room Rate         : RM %.2f / night%n", room.getPricePerNight());
         System.out.println("------------------------------------------------------------");
         System.out.printf(" Supervisor ID     : %s%n", supervisorId);
@@ -331,7 +447,8 @@ public class HousekeepingControl {
         room.setStatus(newStatus);
         saveRoomsToData();
 
-        RoomTaskLog log = new RoomTaskLog(roomId, currentStatus, newStatus, staffId);
+        int targetMins = getStandardCleaningDurationMinutes(room.getRoomType());
+        RoomTaskLog log = new RoomTaskLog(roomId, room.getRoomType(), currentStatus, newStatus, staffId, targetMins);
         taskLogList.add(log);
         undoStack.push(log);
 
@@ -346,37 +463,53 @@ public class HousekeepingControl {
     }
 
     public void displayOperationalReport() {
-        System.out.println("\n===========================================================================================================================");
-        System.out.println("                                      HOUSEKEEPING TASK HISTORY REPORT                                                     ");
-        System.out.println("===========================================================================================================================");
+        String equalHeader = "===========================================================================================================================================================================";
+        System.out.println("\n" + equalHeader);
+        System.out.println("                                                                   HOUSEKEEPING TASK HISTORY REPORT                                                                        ");
+        System.out.println(equalHeader);
         if (taskLogList.isEmpty()) {
             System.out.println(" (No task history entries recorded yet)");
         } else {
             int totalCount = taskLogList.size();
-            String border = "+---------+----------+--------------------------+----------+-----------------------+-----------------------+";
+            double totalFines = 0.0;
+            String border = "+---------+----------+---------------+--------------------------+----------+------------------------+------------------------+-------------+-------------+--------------+";
             
             System.out.println(border);
-            System.out.printf("| %-7s | %-8s | %-24s | %-8s | %-21s | %-21s |\n", 
-                    "Task ID", "Room No.", "Status", "Staff ID", "Start Time", "End Time");
+            System.out.printf("| %-7s | %-8s | %-13s | %-24s | %-8s | %-22s | %-22s | %-11s | %-11s | %-12s |\n", 
+                    "Task ID", "Room No.", "Room Type", "Status", "Staff ID", "Start Time", "End Time", "Target Mins", "Total Time", "Penalty Fine");
             System.out.println(border);
 
             for (int i = totalCount; i >= 1; i--) {
                 RoomTaskLog log = taskLogList.get(i);
                 if (log != null) {
+                    totalFines += log.getPenaltyFine();
                     String taskId = String.format("HK%03d", i);
-                    System.out.printf("| %-7s | %-8s | %-24s | %-8s | %-21s | %-21s |\n", 
+                    String fineStr = log.getPenaltyFine() > 0 ? String.format("RM %.2f", log.getPenaltyFine()) : "RM 0.00";
+                    String actualTimeStr;
+                    if (log.getEndTime() == 0) {
+                        actualTimeStr = "In Progress";
+                    } else {
+                        long mins = Math.max(0, (log.getEndTime() - log.getStartTime()) / (60 * 1000L));
+                        actualTimeStr = mins + " mins";
+                    }
+
+                    System.out.printf("| %-7s | %-8s | %-13s | %-24s | %-8s | %-22s | %-22s | %-11s | %-11s | %-12s |\n", 
                             taskId, 
                             log.getRoomId(), 
+                            log.getRoomType(),
                             log.getNewStatus(), 
                             log.getStaffId(), 
                             log.getFormattedTime(log.getStartTime()),
-                            log.getFormattedTime(log.getEndTime()));
+                            log.getFormattedTime(log.getEndTime()),
+                            log.getEstimatedDurationMinutes() + " mins",
+                            actualTimeStr,
+                            fineStr);
                 }
             }
 
             System.out.println(border);
-            System.out.println(" Total tasks: " + totalCount);
+            System.out.printf(" Total Tasks Logged : %d | Total Late Penalty Fines Accumulated: RM %.2f%n", totalCount, totalFines);
         }
-        System.out.println("===========================================================================================================================\n");
+        System.out.println(equalHeader + "\n");
     }
 }
