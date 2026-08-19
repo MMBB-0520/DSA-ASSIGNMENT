@@ -1,21 +1,25 @@
 package control;
 
+import adt.ArrayStack;
 import adt.CustomLinkedList;
 import adt.ListInterface;
-import data.JsonManager;
+import adt.StackInterface;
+import dao.RoomDAO;
+import dao.impl.RoomDAOImpl;
 import entity.Room;
 import entity.RoomTaskLog;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class HousekeepingControl {
-    private ListInterface<RoomTaskLog> taskLogList;
-    private List<Room> roomList;
+    private ListInterface<RoomTaskLog> taskLogList;   // Linear ADT: task history for reporting
+    private StackInterface<RoomTaskLog> undoStack;     // Stack ADT: LIFO for rollback/undo
+    private ListInterface<Room> roomList;              // Linear ADT: room list (custom, NOT java.util)
+    private RoomDAO roomDAO;                           // DAO: shared data layer with other modules
 
     public HousekeepingControl() {
         this.taskLogList = new CustomLinkedList<>();
-        this.roomList = new ArrayList<>();
+        this.undoStack = new ArrayStack<>();
+        this.roomList = new CustomLinkedList<>();
+        this.roomDAO = new RoomDAOImpl();
         loadRoomsFromData();
         initSampleTaskLogs();
     }
@@ -25,11 +29,16 @@ public class HousekeepingControl {
             RoomTaskLog log105 = new RoomTaskLog("105", "Dirty", "Cleaning In Progress", "S001");
             log105.setStartTime(System.currentTimeMillis());
             taskLogList.add(log105);
+            undoStack.push(log105);
         }
     }
 
+    /**
+     * Loads rooms from RoomDAO (same data source as Walk-In Registration & Front Desk modules).
+     * Uses CustomLinkedList (Linear ADT) instead of java.util.ArrayList.
+     */
     private void loadRoomsFromData() {
-        Room[] loaded = JsonManager.loadRooms();
+        Room[] loaded = roomDAO.getAllRooms();
         if (loaded != null && loaded.length > 0) {
             for (Room r : loaded) {
                 roomList.add(r);
@@ -44,16 +53,33 @@ public class HousekeepingControl {
         }
     }
 
+    /**
+     * Saves rooms via RoomDAO (shared data layer — changes are visible to all modules).
+     * Converts CustomLinkedList to Room[] array using toArray().
+     */
     public void saveRoomsToData() {
-        JsonManager.saveRooms(roomList.toArray(new Room[0]));
+        Object[] rawArray = roomList.toArray();
+        Room[] rooms = new Room[rawArray.length];
+        for (int i = 0; i < rawArray.length; i++) {
+            rooms[i] = (Room) rawArray[i];
+        }
+        roomDAO.saveAllRooms(rooms);
     }
 
-    public List<Room> getAllRooms() {
+    /**
+     * Returns all rooms as ListInterface (custom ADT).
+     * Other modules can iterate via for-each (CustomLinkedList implements Iterable).
+     */
+    public ListInterface<Room> getAllRooms() {
         return roomList;
     }
 
+    /**
+     * Finds a room by room number using CustomLinkedList iteration.
+     */
     public Room findRoom(String roomId) {
-        for (Room r : roomList) {
+        for (int i = 1; i <= roomList.size(); i++) {
+            Room r = roomList.get(i);
             if (r.getRoomNo().equalsIgnoreCase(roomId)) {
                 return r;
             }
@@ -79,7 +105,8 @@ public class HousekeepingControl {
         saveRoomsToData();
         
         RoomTaskLog log = new RoomTaskLog(roomId, currentStatus, nextStatus, staffId);
-        taskLogList.add(log);
+        taskLogList.add(log);        // Add to list (for reporting)
+        undoStack.push(log);         // Push to stack (for undo/rollback - LIFO)
         
         System.out.println("Success: Assigned Room " + roomId + " to Housekeeper " + staffId + ". Status: " + nextStatus);
         return true;
@@ -118,6 +145,7 @@ public class HousekeepingControl {
             RoomTaskLog log = new RoomTaskLog(roomId, "Cleaning In Progress", logStatus, staffId);
             log.setEndTime(System.currentTimeMillis());
             taskLogList.add(log);
+            undoStack.push(log);
         }
 
         System.out.println("Success: Room " + roomId + " cleaning completed by Housekeeper " + staffId + ". Status: " + roomStatus);
@@ -171,6 +199,7 @@ public class HousekeepingControl {
             RoomTaskLog log = new RoomTaskLog(roomId, "Cleaned", logStatus, supervisorId);
             log.setEndTime(System.currentTimeMillis());
             taskLogList.add(log);
+            undoStack.push(log);
         }
 
         java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -199,10 +228,12 @@ public class HousekeepingControl {
     }
 
     /**
-     * Requirement: Instantly Rollback the schedule (Undo using List removeLast / remove).
+     * Requirement: Instantly Rollback the schedule (Undo).
+     * Uses Stack ADT (LIFO — Last-In-First-Out) to pop the most recent action.
+     * Also removes the corresponding entry from the task log list.
      */
     public boolean undoLastAction() {
-        if (taskLogList.isEmpty()) {
+        if (undoStack.isEmpty()) {
             System.out.println("\n============================================================");
             System.out.println("            HOUSEKEEPING ACTION ROLLBACK (UNDO)             ");
             System.out.println("============================================================");
@@ -211,7 +242,12 @@ public class HousekeepingControl {
             return false;
         }
 
-        RoomTaskLog lastLog = taskLogList.removeLast();
+        // Pop from Stack ADT (LIFO — undo the LAST action)
+        RoomTaskLog lastLog = undoStack.pop();
+
+        // Also remove from the task log list (for report consistency)
+        taskLogList.remove(lastLog);
+
         Room room = findRoom(lastLog.getRoomId());
 
         if (room != null) {
@@ -229,7 +265,7 @@ public class HousekeepingControl {
             System.out.printf(" Task Timestamp    : %s%n", lastLog.getFormattedTime(lastLog.getStartTime()));
             System.out.println("------------------------------------------------------------");
             System.out.printf(" REVERTED STATUS   : %s%n", room.getStatus());
-            System.out.println(" REMARK            : Task log popped & removed via ADT removeLast()");
+            System.out.println(" REMARK            : Task popped from Stack ADT (LIFO) & removed from List");
             System.out.println("============================================================\n");
             return true;
         } else {
@@ -265,6 +301,7 @@ public class HousekeepingControl {
 
         RoomTaskLog log = new RoomTaskLog(roomId, currentStatus, newStatus, staffId);
         taskLogList.add(log);
+        undoStack.push(log);
 
         System.out.println("\n[LATE CHECK-OUT ROLLBACK EXECUTED]");
         System.out.println("Guest late check-out approved for Room " + roomId + ".");

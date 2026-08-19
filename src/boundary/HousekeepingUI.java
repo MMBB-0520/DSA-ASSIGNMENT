@@ -1,5 +1,7 @@
 package boundary;
 
+import adt.CustomLinkedList;
+import adt.ListInterface;
 import control.HousekeepingControl;
 import control.StaffControl;
 import entity.Room;
@@ -55,13 +57,19 @@ public class HousekeepingUI {
         System.out.print("Please enter your input: ");
     }
 
+    /**
+     * Displays room status using CustomLinkedList (implements Iterable — supports for-each).
+     */
     private void viewRoomsStatus() {
         System.out.println("\n=====================================================================");
         System.out.println("                   CURRENT ROOM HOUSEKEEPING STATUS                   ");
         System.out.println("=====================================================================");
         System.out.printf("%-10s %-20s %-15s %-20s\n", "Room No.", "Room Type", "Price (RM)", "Current Status");
         System.out.println("---------------------------------------------------------------------");
-        for (Room r : controller.getAllRooms()) {
+        // CustomLinkedList implements Iterable<T>, so for-each loop works directly
+        ListInterface<Room> rooms = controller.getAllRooms();
+        for (int i = 1; i <= rooms.size(); i++) {
+            Room r = rooms.get(i);
             System.out.printf("%-10s %-20s %-15.2f %-20s\n", 
                     r.getRoomNo(), r.getRoomType(), r.getPricePerNight(), r.getStatus());
         }
@@ -118,11 +126,18 @@ public class HousekeepingUI {
         controller.completeCleaning(roomNo, id);
     }
 
+    /**
+     * Inspect room — uses CustomLinkedList (Linear ADT) instead of java.util.ArrayList
+     * to filter cleaned rooms waiting for inspection.
+     */
     private void inspectRoom() {
         System.out.println("\n--- Step 3: Supervisor Inspection ---");
 
-        java.util.List<Room> cleanedRooms = new java.util.ArrayList<>();
-        for (Room r : controller.getAllRooms()) {
+        // Using CustomLinkedList (custom ADT) instead of java.util.ArrayList
+        ListInterface<Room> cleanedRooms = new CustomLinkedList<>();
+        ListInterface<Room> allRooms = controller.getAllRooms();
+        for (int i = 1; i <= allRooms.size(); i++) {
+            Room r = allRooms.get(i);
             if (r.getStatus().toLowerCase().startsWith("cleaned")) {
                 cleanedRooms.add(r);
             }
@@ -136,7 +151,8 @@ public class HousekeepingUI {
             System.out.println("=====================================================================");
             System.out.printf("%-10s %-20s %-15s %-25s\n", "Room No.", "Room Type", "Price (RM)", "Current Status");
             System.out.println("---------------------------------------------------------------------");
-            for (Room r : cleanedRooms) {
+            for (int i = 1; i <= cleanedRooms.size(); i++) {
+                Room r = cleanedRooms.get(i);
                 System.out.printf("%-10s %-20s %-15.2f %-25s\n", 
                         r.getRoomNo(), r.getRoomType(), r.getPricePerNight(), r.getStatus());
             }
@@ -169,5 +185,3 @@ public class HousekeepingUI {
         controller.inspectRoom(roomNo, id, isClean);
     }
 }
-
-
