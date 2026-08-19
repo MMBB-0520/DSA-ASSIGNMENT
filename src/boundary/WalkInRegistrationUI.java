@@ -135,7 +135,8 @@ public class WalkInRegistrationUI {
         System.out.printf(" Contact Number  : %s%n", booking.getGuest().getContactNumber());
         System.out.printf(" IC / Passport   : %s%n", booking.getGuest().getIcPassport());
         System.out.println("------------------------------------------------------------");
-        System.out.printf(" Room Type       : %s (RM %.2f / night)%n", booking.getRoomType(), booking.getPricePerNight());
+        System.out.printf(" Room Type       : %s (RM %.2f / night)%n", booking.getRoomType(),
+                booking.getPricePerNight());
         System.out.printf(" Number of Guests: %d Person(s)%n", booking.getNumGuests());
         System.out.printf(" Check-In Date   : %s%n", booking.getCheckInDateTime().format(DATETIME_FORMAT));
         System.out.printf(" Check-Out Date  : %s%n", booking.getCheckOutDateTime().format(DATETIME_FORMAT));
@@ -259,7 +260,7 @@ public class WalkInRegistrationUI {
 
         Booking cancelled = control.cancelBooking(id);
         System.out.println("\n[√] BOOKING CANCELLED SUCCESSFULLY:");
-        System.out.printf("    Confirmation No: %s | Guest: %s | Status: %s%n\n", 
+        System.out.printf("    Confirmation No: %s | Guest: %s | Status: %s%n\n",
                 cancelled.getConfirmationNo(), cancelled.getGuest().getGuestName(), cancelled.getStatus());
     }
 
@@ -305,7 +306,7 @@ public class WalkInRegistrationUI {
         printTable(filtered);
         double total = 0;
         for (Booking b : filtered) {
-            total += b.getTotalPrice();
+            total += b.getBill().getGrandTotal();
         }
         System.out.printf("Subtotal for %s: RM%.2f%n", roomType, total);
     }
@@ -320,7 +321,7 @@ public class WalkInRegistrationUI {
                     b.getConfirmationNo(), b.getGuest().getGuestName(), b.getRoomType(), b.getNumGuests(),
                     b.getCheckInDateTime().toString().replace("T", " "),
                     b.getCheckOutDateTime().toString().replace("T", " "),
-                    b.getNights(), b.getTotalPrice(), b.getStatus());
+                    b.getNights(), b.getBill().getGrandTotal(), b.getStatus());
         }
         System.out.println(TABLE_LINE);
     }

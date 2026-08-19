@@ -224,7 +224,7 @@ public class WalkInRegistrationControl {
     public double getTotalQueueRevenue() {
         double total = 0;
         for (Booking b : viewQueue()) {
-            total += b.getTotalPrice();
+            total += b.getBill().getGrandTotal();
         }
         return total;
     }
