@@ -26,8 +26,8 @@ public class HousekeepingControl {
 
     private void initSampleTaskLogs() {
         if (taskLogList.isEmpty()) {
-            RoomTaskLog log105 = new RoomTaskLog("105", "Dirty", "Cleaning In Progress", "S001");
-            log105.setStartTime(System.currentTimeMillis());
+            RoomTaskLog log105 = new RoomTaskLog("105", "Cleaned", "Inspected", "SP001");
+            log105.setEndTime(System.currentTimeMillis());
             taskLogList.add(log105);
             undoStack.push(log105);
         }
@@ -72,6 +72,38 @@ public class HousekeepingControl {
      */
     public ListInterface<Room> getAllRooms() {
         return roomList;
+    }
+
+    /**
+     * Returns all rooms as an array for UI display.
+     */
+    public Room[] getAllRoomsArray() {
+        Object[] rawArray = roomList.toArray();
+        Room[] rooms = new Room[rawArray.length];
+        for (int i = 0; i < rawArray.length; i++) {
+            rooms[i] = (Room) rawArray[i];
+        }
+        return rooms;
+    }
+
+    /**
+     * Filters rooms waiting for inspection using CustomLinkedList (Linear ADT)
+     * and returns them as an array for UI display.
+     */
+    public Room[] getCleanedRooms() {
+        ListInterface<Room> cleanedList = new CustomLinkedList<>();
+        for (int i = 1; i <= roomList.size(); i++) {
+            Room r = roomList.get(i);
+            if (r != null && r.getStatus().toLowerCase().startsWith("cleaned")) {
+                cleanedList.add(r);
+            }
+        }
+        Object[] rawArray = cleanedList.toArray();
+        Room[] result = new Room[rawArray.length];
+        for (int i = 0; i < rawArray.length; i++) {
+            result[i] = (Room) rawArray[i];
+        }
+        return result;
     }
 
     /**

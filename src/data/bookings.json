@@ -14,11 +14,7 @@
     "checkInDateTime": "2026-08-14T23:40:00",
     "checkOutDateTime": "2026-08-19T13:00:00",
     "registeredAt": "2026-08-14T23:35:56.7439802",
-    "status": "CONFIRMED",
-    "otherCharges": 0.0,
-    "cashTendered": 0.0,
-    "changeDue": 0.0,
-    "requestedLateOption": 0
+    "status": "CANCELLED"
   },
   {
     "confirmationNo": "84920183",
@@ -35,11 +31,7 @@
     "checkInDateTime": "2026-08-12T06:37:51.3336306",
     "checkOutDateTime": "2026-08-14T08:37:51.3336306",
     "registeredAt": "2026-08-12T05:37:51.3336306",
-    "status": "COMPLETED",
-    "otherCharges": 0.0,
-    "cashTendered": 0.0,
-    "changeDue": 0.0,
-    "requestedLateOption": 0
+    "status": "COMPLETED"
   },
   {
     "confirmationNo": "59302148",
@@ -56,10 +48,6 @@
     "checkInDateTime": "2026-08-11T08:37:51.3336306",
     "checkOutDateTime": "2026-08-13T08:37:51.3336306",
     "registeredAt": "2026-08-10T08:37:51.3336306",
-    "status": "COMPLETED",
-    "otherCharges": 0.0,
-    "cashTendered": 0.0,
-    "changeDue": 0.0,
-    "requestedLateOption": 0
+    "status": "COMPLETED"
   }
 ]

@@ -54,6 +54,10 @@ public class Booking implements Comparable<Booking> {
         return bill;
     }
 
+    public double getTotalPrice() {
+        return getBill().getGrandTotal();
+    }
+
     public void setBill(Bill bill) {
         this.bill = bill;
     }
