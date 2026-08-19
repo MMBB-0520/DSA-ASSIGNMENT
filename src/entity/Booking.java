@@ -41,12 +41,14 @@ public class Booking implements Comparable<Booking> {
         this.checkOutDateTime = checkOutDateTime;
         this.registeredAt = registeredAt;
         this.status = STATUS_PENDING;
-        this.bill = new Bill("INV-" + (confirmationNo != null ? confirmationNo : "00000000"), pricePerNight, getNights());
+        this.bill = new Bill("INV-" + (confirmationNo != null ? confirmationNo : "00000000"), pricePerNight,
+                getNights());
     }
 
     public Bill getBill() {
         if (bill == null) {
-            bill = new Bill("INV-" + (confirmationNo != null ? confirmationNo : "00000000"), pricePerNight, getNights());
+            bill = new Bill("INV-" + (confirmationNo != null ? confirmationNo : "00000000"), pricePerNight,
+                    getNights());
         } else {
             bill.setPricePerNight(pricePerNight);
             bill.setNights(getNights());

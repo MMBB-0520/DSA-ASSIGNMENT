@@ -12,6 +12,7 @@ import dao.impl.GuestDAOImpl;
 import dao.impl.RoomDAOImpl;
 import entity.Bill;
 import entity.Booking;
+import entity.Guest;
 import entity.Room;
 import java.util.Iterator;
 
@@ -20,21 +21,23 @@ import java.util.Iterator;
  * Best Practice 1: Declares ADT variable using interface type (BSTInterface).
  * Best Practice 2: Declares Data Access Objects using Interface types
  * (BookingDAO, RoomDAO, GuestDAO).
+ *
+ * @author Ng Yuen Qi
  */
 public class FrontDeskServiceControl {
 
     // Using interface types for variables (OOP Best Practice)
-    private BSTInterface<Booking> bookingTree;
-    private BookingDAO bookingDAO;
-    private RoomDAO roomDAO;
-    private GuestDAO guestDAO;
+    private final BSTInterface<Booking> bookingTree;
+    private final BookingDAO bookingDAO;
+    private final RoomDAO roomDAO;
+    private final GuestDAO guestDAO;
 
     public FrontDeskServiceControl() {
         this.bookingTree = new MyBinarySearchTree<>();
         this.bookingDAO = new BookingDAOImpl();
         this.roomDAO = new RoomDAOImpl();
         this.guestDAO = new GuestDAOImpl();
-        loadDataFromJson();
+        loadData();
     }
 
     /**
@@ -42,10 +45,10 @@ public class FrontDeskServiceControl {
      * Auto-assigns available rooms for CONFIRMED bookings whose check-in date is
      * today or past.
      */
-    private void loadDataFromJson() {
+    private void loadData() {
         bookingTree.clear();
         Booking[] loaded = bookingDAO.getAllBookings();
-        Room[] allRooms = (roomDAO != null) ? roomDAO.getAllRooms() : null;
+        Room[] allRooms = roomDAO.getAllRooms();
 
         boolean roomUpdated = false;
         boolean bookingUpdated = false;
@@ -137,12 +140,16 @@ public class FrontDeskServiceControl {
             }
         }
 
-        if (roomUpdated && allRooms != null && roomDAO != null) {
+        if (roomUpdated && allRooms != null) {
             roomDAO.saveAllRooms(allRooms);
         }
-        if (bookingUpdated && loaded != null && bookingDAO != null) {
+        if (bookingUpdated && loaded != null) {
             bookingDAO.saveAllBookings(loaded);
         }
+    }
+
+    public void reloadData() {
+        loadData();
     }
 
     /**
@@ -157,63 +164,84 @@ public class FrontDeskServiceControl {
         return bookingTree.search(dummySearchKey);
     }
 
-    /**
-     * Search Available Rooms Pipeline:
-     * 1. Iterate through rooms loaded via RoomDAO.
-     * 2. Filter available rooms into CustomLinkedList ADT by Room Type and Max
-     * Price limit.
-     * 3. Sort filtered rooms by Room Number or Price per night.
-     */
-    public Room[] searchAvailableRooms(String roomTypeFilter, String sortBy) {
-        Room[] allRooms = roomDAO.getAllRooms();
-        if (allRooms == null || allRooms.length == 0) {
-            return new Room[0];
-        }
-
-        // Step 1 & 2: Iterate & Filter using Linear ADT (CustomLinkedList)
-        ListInterface<Room> filteredList = new CustomLinkedList<>();
-
-        for (Room room : allRooms) {
-            if (room != null && Room.STATUS_AVAILABLE.equalsIgnoreCase(room.getStatus())) {
-                boolean matchType = (roomTypeFilter == null || roomTypeFilter.trim().isEmpty()
-                        || roomTypeFilter.equalsIgnoreCase("All")
-                        || room.getRoomType().equalsIgnoreCase(roomTypeFilter.trim()));
-
-                if (matchType) {
-                    filteredList.add(room);
-                }
-            }
-        }
-
-        // Convert CustomLinkedList to array for sorting
-        Object[] rawArray = filteredList.toArray();
-        Room[] filtered = new Room[rawArray.length];
-        for (int i = 0; i < rawArray.length; i++) {
-            filtered[i] = (Room) rawArray[i];
-        }
-
-        // Step 3: Sort by Room Number or Price per Night (Insertion Sort algorithm)
-        for (int i = 1; i < filtered.length; i++) {
-            Room key = filtered[i];
-            int j = i - 1;
-
-            while (j >= 0 && compareRooms(filtered[j], key, sortBy) > 0) {
-                filtered[j + 1] = filtered[j];
-                j--;
-            }
-            filtered[j + 1] = key;
-        }
-
-        return filtered;
+    public boolean containsConfirmationNo(String confirmationNo) {
+        if (confirmationNo == null)
+            return false;
+        Booking dummySearchKey = new Booking(confirmationNo.trim(), null, null, 0, 0, null, null, null);
+        return bookingTree.contains(dummySearchKey);
     }
 
-    private int compareRooms(Room r1, Room r2, String sortBy) {
-        if ("Price".equalsIgnoreCase(sortBy)) {
-            int priceComp = Double.compare(r1.getPricePerNight(), r2.getPricePerNight());
-            if (priceComp != 0)
-                return priceComp;
+    /**
+     * Adds or updates a booking in the BST and persists via DAOs.
+     */
+    public boolean addBooking(Booking booking) {
+        if (booking == null || booking.getConfirmationNo() == null) {
+            return false;
         }
-        return r1.getRoomNo().compareTo(r2.getRoomNo());
+
+        boolean added = bookingTree.insert(booking);
+
+        if (!added) {
+            return false;
+        }
+
+        bookingDAO.saveBooking(booking);
+
+        if (booking.getGuest() != null) {
+            guestDAO.saveGuest(booking.getGuest());
+        }
+        return true;
+    }
+
+    public int getTotalIndexedCount() {
+        return bookingTree.size();
+    }
+
+    public Booking getMinBooking() {
+        return bookingTree.findMin();
+    }
+
+    public Booking getMaxBooking() {
+        return bookingTree.findMax();
+    }
+
+    public Iterator<Booking> getBookingIterator() {
+        return bookingTree.getIterator();
+    }
+
+    /**
+     * Registers a future reservation booking and persists changes to BST and JSON.
+     */
+    public Booking registerFutureBooking(String name, String contactNumber, String icPassport,
+            String roomType, double pricePerNight, int numGuests,
+            java.time.LocalDateTime checkIn, java.time.LocalDateTime checkOut, double depositPaid) {
+
+        Guest existingGuest = findGuestByContact(contactNumber);
+        Guest guest = (existingGuest != null) ? existingGuest
+                : new Guest(generateGuestId(), name, contactNumber, icPassport);
+
+        String confirmationNo = String.format("%08d", (int) (Math.random() * 90000000) + 10000000);
+        Booking booking = new Booking(confirmationNo, guest, roomType, pricePerNight, numGuests, checkIn, checkOut,
+                java.time.LocalDateTime.now());
+        booking.setStatus(Booking.STATUS_RESERVED);
+        Bill bill = booking.getBill();
+        bill.setCashTendered(depositPaid);
+        bill.setPaymentStatus("DEPOSIT PAID");
+
+        bookingTree.insert(booking);
+        bookingDAO.saveBooking(booking);
+        if (guestDAO != null && guest != null) {
+            guestDAO.saveGuest(guest);
+        }
+
+        return booking;
+    }
+
+    public Booking registerFutureBooking(String name, String contactNumber, String icPassport,
+            String roomType, double pricePerNight, int numGuests,
+            java.time.LocalDateTime checkIn, java.time.LocalDateTime checkOut) {
+        return registerFutureBooking(name, contactNumber, icPassport, roomType, pricePerNight, numGuests, checkIn,
+                checkOut, pricePerNight * 0.30);
     }
 
     /**
@@ -261,7 +289,7 @@ public class FrontDeskServiceControl {
         booking.setStatus(Booking.STATUS_CHECKED_IN);
         bill.setCashTendered(bill.getCashTendered() + cashTendered);
         bill.setChangeDue(cashTendered - requiredDeposit);
-        bill.setPaymentStatus(entity.Bill.PAYMENT_PAID_CASH);
+        bill.setPaymentStatus(Bill.PAYMENT_PAID_CASH);
 
         // Auto-assign room if unassigned during Check-In
         Room[] allRooms = roomDAO.getAllRooms();
@@ -356,7 +384,7 @@ public class FrontDeskServiceControl {
         }
 
         booking.setStatus(Booking.STATUS_COMPLETED);
-        bill.setPaymentStatus(entity.Bill.PAYMENT_PAID_CASH);
+        bill.setPaymentStatus(Bill.PAYMENT_PAID_CASH);
         bill.setCashTendered(cashTendered);
         bill.setChangeDue(netDue > 0 ? cashTendered - netDue : 0.0);
 
@@ -377,97 +405,62 @@ public class FrontDeskServiceControl {
     }
 
     /**
-     * Adds or updates a booking in the BST and persists via DAOs.
+     * Search Available Rooms Pipeline:
+     * 1. Iterate through rooms loaded via RoomDAO.
+     * 2. Filter available rooms into CustomLinkedList ADT by Room Type and Max
+     * Price limit.
+     * 3. Sort filtered rooms by Room Number or Price per night.
      */
-    public boolean addBooking(Booking booking) {
-        if (booking == null || booking.getConfirmationNo() == null) {
-            return false;
-        }
-
-        boolean added = bookingTree.insert(booking);
-
-        if (!added) {
-            return false;
-        }
-
-        bookingDAO.saveBooking(booking);
-
-        if (booking.getGuest() != null) {
-            guestDAO.saveGuest(booking.getGuest());
-        }
-        return true;
-    }
-
-    public boolean containsConfirmationNo(String confirmationNo) {
-        if (confirmationNo == null)
-            return false;
-        Booking dummySearchKey = new Booking(confirmationNo.trim(), null, null, 0, 0, null, null, null);
-        return bookingTree.contains(dummySearchKey);
-    }
-
-    public int getTotalIndexedCount() {
-        return bookingTree.size();
-    }
-
-    public Booking getMinBooking() {
-        return bookingTree.findMin();
-    }
-
-    public Booking getMaxBooking() {
-        return bookingTree.findMax();
-    }
-
-    public Iterator<Booking> getBookingIterator() {
-        return bookingTree.getIterator();
-    }
-
-    public void reloadData() {
-        loadDataFromJson();
-    }
-
-    /**
-     * Retrieves all historical and active bookings for a guest by contact number
-     * using CustomLinkedList Linear ADT.
-     */
-    public ListInterface<Booking> getGuestBookingHistory(String contactNumber) {
-        ListInterface<Booking> history = new CustomLinkedList<>();
-        if (contactNumber == null || contactNumber.trim().isEmpty()) {
-            return history;
-        }
-
-        Booking[] allBookings = bookingDAO.getAllBookings();
-        if (allBookings != null) {
-            for (Booking b : allBookings) {
-                if (b != null && b.getGuest() != null
-                        && contactNumber.trim().equalsIgnoreCase(b.getGuest().getContactNumber())) {
-                    history.add(b);
-                }
-            }
-        }
-        return history;
-    }
-
-    /**
-     * Collects all rooms requiring attention (DIRTY or LATE Check-Out status)
-     * using CustomLinkedList Linear ADT.
-     */
-    public ListInterface<Room> getOverdueAndDirtyRooms() {
-        ListInterface<Room> alertList = new CustomLinkedList<>();
+    public Room[] searchAvailableRooms(String roomTypeFilter, String sortBy) {
         Room[] allRooms = roomDAO.getAllRooms();
-        if (allRooms != null) {
-            for (Room r : allRooms) {
-                if (r != null) {
-                    String status = r.getStatus();
-                    if (Room.STATUS_DIRTY.equalsIgnoreCase(status)
-                            || Room.STATUS_LATE_30MINS.equalsIgnoreCase(status)
-                            || Room.STATUS_LATE_2HRS.equalsIgnoreCase(status)
-                            || Room.STATUS_LATE_4HRS.equalsIgnoreCase(status)) {
-                        alertList.add(r);
-                    }
+        if (allRooms == null || allRooms.length == 0) {
+            return new Room[0];
+        }
+
+        // Step 1 & 2: Iterate & Filter using Linear ADT (CustomLinkedList)
+        ListInterface<Room> filteredList = new CustomLinkedList<>();
+
+        for (Room room : allRooms) {
+            if (room != null && Room.STATUS_AVAILABLE.equalsIgnoreCase(room.getStatus())) {
+                boolean matchType = (roomTypeFilter == null || roomTypeFilter.trim().isEmpty()
+                        || roomTypeFilter.equalsIgnoreCase("All")
+                        || room.getRoomType().equalsIgnoreCase(roomTypeFilter.trim()));
+
+                if (matchType) {
+                    filteredList.add(room);
                 }
             }
         }
-        return alertList;
+
+        // Convert CustomLinkedList to array for sorting
+        Object[] rawArray = filteredList.toArray();
+        Room[] filtered = new Room[rawArray.length];
+        for (int i = 0; i < rawArray.length; i++) {
+            filtered[i] = (Room) rawArray[i];
+        }
+
+        // Step 3: Sort by Room Number or Price per Night (Insertion Sort algorithm)
+        for (int i = 1; i < filtered.length; i++) {
+            Room key = filtered[i];
+            int j = i - 1;
+
+            while (j >= 0 && compareRooms(filtered[j], key, sortBy) > 0) {
+                filtered[j + 1] = filtered[j];
+                j--;
+            }
+            filtered[j + 1] = key;
+        }
+
+        return filtered;
+    }
+
+    private int compareRooms(Room r1, Room r2, String sortBy) {
+        if ("Price".equalsIgnoreCase(sortBy)) {
+            int priceComp = Double.compare(r1.getPricePerNight(), r2.getPricePerNight());
+            if (priceComp != 0)
+                return priceComp;
+        }
+        return r1.getRoomNo().compareTo(r2.getRoomNo());
     }
 
     /**
@@ -622,15 +615,38 @@ public class FrontDeskServiceControl {
     }
 
     /**
+     * Collects all rooms requiring attention (DIRTY or LATE Check-Out status)
+     * using CustomLinkedList Linear ADT.
+     */
+    public ListInterface<Room> getOverdueAndDirtyRooms() {
+        ListInterface<Room> alertList = new CustomLinkedList<>();
+        Room[] allRooms = roomDAO.getAllRooms();
+        if (allRooms != null) {
+            for (Room r : allRooms) {
+                if (r != null) {
+                    String status = r.getStatus();
+                    if (Room.STATUS_DIRTY.equalsIgnoreCase(status)
+                            || Room.STATUS_LATE_30MINS.equalsIgnoreCase(status)
+                            || Room.STATUS_LATE_2HRS.equalsIgnoreCase(status)
+                            || Room.STATUS_LATE_4HRS.equalsIgnoreCase(status)) {
+                        alertList.add(r);
+                    }
+                }
+            }
+        }
+        return alertList;
+    }
+
+    /**
      * Looks up existing guest record by contact number.
      */
-    public entity.Guest findGuestByContact(String contactNumber) {
+    public Guest findGuestByContact(String contactNumber) {
         if (contactNumber == null || contactNumber.trim().isEmpty()) {
             return null;
         }
-        entity.Guest[] guests = guestDAO.getAllGuests();
+        Guest[] guests = guestDAO.getAllGuests();
         if (guests != null) {
-            for (entity.Guest g : guests) {
+            for (Guest g : guests) {
                 if (g != null && contactNumber.trim().equalsIgnoreCase(g.getContactNumber())) {
                     return g;
                 }
@@ -640,104 +656,117 @@ public class FrontDeskServiceControl {
     }
 
     /**
-     * Registers a future reservation booking and persists changes to BST and JSON.
+     * Retrieves all historical and active bookings for a guest by contact number
+     * using CustomLinkedList Linear ADT.
      */
-    public Booking registerFutureBooking(String name, String contactNumber, String icPassport,
-            String roomType, double pricePerNight, int numGuests,
-            java.time.LocalDateTime checkIn, java.time.LocalDateTime checkOut, double depositPaid) {
-
-        entity.Guest existingGuest = findGuestByContact(contactNumber);
-        entity.Guest guest = (existingGuest != null) ? existingGuest
-                : new entity.Guest(generateGuestId(), name, contactNumber, icPassport);
-
-        String confirmationNo = String.format("%08d", (int) (Math.random() * 90000000) + 10000000);
-        Booking booking = new Booking(confirmationNo, guest, roomType, pricePerNight, numGuests, checkIn, checkOut,
-                java.time.LocalDateTime.now());
-        booking.setStatus(Booking.STATUS_RESERVED);
-        Bill bill = booking.getBill();
-        bill.setCashTendered(depositPaid);
-        bill.setPaymentStatus("DEPOSIT PAID");
-
-        bookingTree.insert(booking);
-        bookingDAO.saveBooking(booking);
-        if (guestDAO != null && guest != null) {
-            guestDAO.saveGuest(guest);
+    public ListInterface<Booking> getGuestBookingHistory(String contactNumber) {
+        ListInterface<Booking> history = new CustomLinkedList<>();
+        if (contactNumber == null || contactNumber.trim().isEmpty()) {
+            return history;
         }
 
-        return booking;
-    }
-
-    public Booking registerFutureBooking(String name, String contactNumber, String icPassport,
-            String roomType, double pricePerNight, int numGuests,
-            java.time.LocalDateTime checkIn, java.time.LocalDateTime checkOut) {
-        return registerFutureBooking(name, contactNumber, icPassport, roomType, pricePerNight, numGuests, checkIn,
-                checkOut, pricePerNight * 0.30);
+        Booking[] allBookings = bookingDAO.getAllBookings();
+        if (allBookings != null) {
+            for (Booking b : allBookings) {
+                if (b != null && b.getGuest() != null
+                        && contactNumber.trim().equalsIgnoreCase(b.getGuest().getContactNumber())) {
+                    history.add(b);
+                }
+            }
+        }
+        return history;
     }
 
     private String generateGuestId() {
-        entity.Guest[] guests = guestDAO.getAllGuests();
+        Guest[] guests = guestDAO.getAllGuests();
         int count = (guests != null) ? guests.length + 1 : 1;
         return String.format("G%04d", count);
     }
 
     /**
-     * Analytics DTO & Service Method
+     * Analytics & Reporting Query Methods (Calculated on-demand via ADT Iterator)
      */
-    public static class AnalyticsSummary {
-        public int totalBookings;
-        public double grandTotalRevenue;
-        public int totalNights;
-        public int standardCount, deluxeCount, suiteCount;
-        public double standardRev, deluxeRev, suiteRev;
-        public int confirmedCount, pendingCount, reservedCount, paidCount;
-        public double avgRevenue;
-        public double avgNights;
-        public Booking minBooking;
-        public Booking maxBooking;
-        public int totalIndexedCount;
+    public int getTotalBookingsCount() {
+        return bookingTree.size();
     }
 
-    public AnalyticsSummary generateAnalyticsSummary() {
-        AnalyticsSummary summary = new AnalyticsSummary();
-        summary.totalIndexedCount = getTotalIndexedCount();
-        summary.minBooking = getMinBooking();
-        summary.maxBooking = getMaxBooking();
-
+    public double getGrandTotalRevenue() {
+        double total = 0.0;
         Iterator<Booking> iterator = getBookingIterator();
         while (iterator != null && iterator.hasNext()) {
             Booking b = iterator.next();
-            if (b == null)
-                continue;
-
-            summary.totalBookings++;
-            double total = b.getBill().getGrandTotal();
-            summary.grandTotalRevenue += total;
-            summary.totalNights += b.getNights();
-
-            if ("Standard".equalsIgnoreCase(b.getRoomType())) {
-                summary.standardCount++;
-                summary.standardRev += total;
-            } else if ("Deluxe".equalsIgnoreCase(b.getRoomType())) {
-                summary.deluxeCount++;
-                summary.deluxeRev += total;
-            } else if ("Suite".equalsIgnoreCase(b.getRoomType())) {
-                summary.suiteCount++;
-                summary.suiteRev += total;
+            if (b != null && b.getBill() != null) {
+                total += b.getBill().getGrandTotal();
             }
-
-            if (Booking.STATUS_CONFIRMED.equalsIgnoreCase(b.getStatus()))
-                summary.confirmedCount++;
-            if (Booking.STATUS_PENDING.equalsIgnoreCase(b.getStatus()))
-                summary.pendingCount++;
-            if (Booking.STATUS_RESERVED.equalsIgnoreCase(b.getStatus()))
-                summary.reservedCount++;
-            if (Bill.PAYMENT_PAID_CASH.equalsIgnoreCase(b.getBill().getPaymentStatus()))
-                summary.paidCount++;
         }
+        return total;
+    }
 
-        summary.avgRevenue = (summary.totalBookings > 0) ? (summary.grandTotalRevenue / summary.totalBookings) : 0.0;
-        summary.avgNights = (summary.totalBookings > 0) ? ((double) summary.totalNights / summary.totalBookings) : 0.0;
+    public double getAverageRevenuePerBooking() {
+        int count = getTotalBookingsCount();
+        return (count > 0) ? (getGrandTotalRevenue() / count) : 0.0;
+    }
 
-        return summary;
+    public double getAverageStayNights() {
+        int count = getTotalBookingsCount();
+        if (count == 0)
+            return 0.0;
+        int totalNights = 0;
+        Iterator<Booking> iterator = getBookingIterator();
+        while (iterator != null && iterator.hasNext()) {
+            Booking b = iterator.next();
+            if (b != null) {
+                totalNights += b.getNights();
+            }
+        }
+        return (double) totalNights / count;
+    }
+
+    public int getBookingCountByStatus(String status) {
+        int count = 0;
+        Iterator<Booking> iterator = getBookingIterator();
+        while (iterator != null && iterator.hasNext()) {
+            Booking b = iterator.next();
+            if (b != null && status.equalsIgnoreCase(b.getStatus())) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public int getPaidBookingCount() {
+        int count = 0;
+        Iterator<Booking> iterator = getBookingIterator();
+        while (iterator != null && iterator.hasNext()) {
+            Booking b = iterator.next();
+            if (b != null && b.getBill() != null && Bill.PAYMENT_PAID_CASH.equalsIgnoreCase(b.getBill().getPaymentStatus())) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public int getBookingCountByRoomType(String roomType) {
+        int count = 0;
+        Iterator<Booking> iterator = getBookingIterator();
+        while (iterator != null && iterator.hasNext()) {
+            Booking b = iterator.next();
+            if (b != null && roomType.equalsIgnoreCase(b.getRoomType())) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public double getRevenueByRoomType(String roomType) {
+        double rev = 0.0;
+        Iterator<Booking> iterator = getBookingIterator();
+        while (iterator != null && iterator.hasNext()) {
+            Booking b = iterator.next();
+            if (b != null && roomType.equalsIgnoreCase(b.getRoomType()) && b.getBill() != null) {
+                rev += b.getBill().getGrandTotal();
+            }
+        }
+        return rev;
     }
 }

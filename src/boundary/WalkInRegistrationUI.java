@@ -1,11 +1,10 @@
 // Author: <your name>
 package boundary;
 
+import adt.ListInterface;
 import control.WalkInRegistrationControl;
-import control.StaffControl;
 import entity.Booking;
 import entity.Room;
-import entity.Staff;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -142,7 +141,7 @@ public class WalkInRegistrationUI {
         System.out.printf(" Check-Out Date  : %s%n", booking.getCheckOutDateTime().format(DATETIME_FORMAT));
         System.out.printf(" Duration        : %d Night(s)%n", booking.getNights());
         System.out.println("------------------------------------------------------------");
-        System.out.printf(" TOTAL AMOUNT    : RM %.2f%n", booking.getTotalPrice());
+        System.out.printf(" TOTAL AMOUNT    : RM %.2f%n", booking.getBill().getGrandTotal());
         System.out.printf(" STATUS          : %s%n", booking.getStatus());
         System.out.println("============================================================\n");
     }
@@ -210,13 +209,65 @@ public class WalkInRegistrationUI {
             return;
         }
         Booking next = control.getNextBooking();
-        Room room = control.getAvailableRoom(next.getRoomType());
-        if (room == null) {
+        System.out.printf("%nNext in queue: %s | Guest: %s | Room Type: %s%n",
+                next.getConfirmationNo(), next.getGuest().getGuestName(), next.getRoomType());
+
+        ListInterface<Room> availableRooms = control.getAvailableRoomsByType(next.getRoomType());
+        if (availableRooms.isEmpty()) {
             System.out.println("[!] No available " + next.getRoomType() + " rooms currently.");
             return;
         }
+
+        Room room = chooseRoom(next.getRoomType(), availableRooms);
+        if (room == null) {
+            System.out.println("Cancelled - booking remains at the front of the queue.");
+            return;
+        }
+
         Booking result = control.processNextBooking(room);
         printConfirmationCard(result, room);
+    }
+
+    // Lets staff auto-assign the next available room or manually pick one from
+    // the list (built using the CustomLinkedList linear ADT).
+    private Room chooseRoom(String roomType, ListInterface<Room> availableRooms) {
+        while (true) {
+            System.out.println("1. Auto-assign next available room");
+            System.out.println("2. Manually select a room");
+            System.out.println("0. Cancel");
+            System.out.print("Enter choice: ");
+            String input = sc.nextLine().trim();
+
+            switch (input) {
+                case "1":
+                    return availableRooms.removeFirst();
+                case "2":
+                    return selectRoomManually(roomType, availableRooms);
+                case "0":
+                    return null;
+                default:
+                    System.out.println("Invalid choice - enter 1, 2 or 0.");
+            }
+        }
+    }
+
+    private Room selectRoomManually(String roomType, ListInterface<Room> availableRooms) {
+        System.out.println("Available " + roomType + " rooms:");
+        for (int i = 0; i < availableRooms.size(); i++) {
+            System.out.printf("  %d. Room %s%n", i + 1, availableRooms.get(i).getRoomNo());
+        }
+        while (true) {
+            System.out.print("Enter room number to assign (0 to cancel): ");
+            String roomInput = sc.nextLine().trim();
+            if (roomInput.equals("0")) {
+                return null;
+            }
+            Room room = control.getAvailableRoomByRoomNo(roomType, roomInput);
+            if (room != null) {
+                return room;
+            }
+            System.out.println("[!] That room isn't currently available. Try again.");
+        }
     }
 
     private void printConfirmationCard(Booking booking, Room room) {
@@ -232,7 +283,7 @@ public class WalkInRegistrationUI {
         System.out.printf(" Check-In Date   : %s%n", booking.getCheckInDateTime().format(DATETIME_FORMAT));
         System.out.printf(" Check-Out Date  : %s%n", booking.getCheckOutDateTime().format(DATETIME_FORMAT));
         System.out.printf(" Duration        : %d Night(s)%n", booking.getNights());
-        System.out.printf(" Total Amount    : RM %.2f%n", booking.getTotalPrice());
+        System.out.printf(" Total Amount    : RM %.2f%n", booking.getBill().getGrandTotal());
         System.out.println("------------------------------------------------------------");
         System.out.printf(" STATUS          : %s%n", booking.getStatus());
         System.out.println("============================================================\n");

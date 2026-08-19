@@ -2,8 +2,13 @@ package adt;
 
 /**
  * Custom Non-Linear Binary Search Tree (BST) ADT Implementation.
- * Uses internal Node structure (data, left, right) for standard O(log n) tree operations.
+ * Uses internal Node structure (data, left, right) for standard O(log n) tree
+ * operations.
  *
+ * Source Acknowledgement: Adapted and enhanced from sample code
+ * BinarySearchTree.
+ * 
+ * @author Ng Yuen Qi
  * @param <T> Element type implementing Comparable interface.
  */
 public class MyBinarySearchTree<T extends Comparable<T>> implements BSTInterface<T> {
