@@ -8,12 +8,17 @@
       "icPassport": "031230145278"
     },
     "roomType": "Deluxe",
+    "roomNo": "201",
     "pricePerNight": 250.0,
     "numGuests": 2,
     "checkInDateTime": "2026-08-14T23:40:00",
     "checkOutDateTime": "2026-08-19T13:00:00",
     "registeredAt": "2026-08-14T23:35:56.7439802",
-    "status": "PENDING"
+    "status": "CONFIRMED",
+    "otherCharges": 0.0,
+    "cashTendered": 0.0,
+    "changeDue": 0.0,
+    "requestedLateOption": 0
   },
   {
     "confirmationNo": "84920183",
@@ -51,6 +56,10 @@
     "checkInDateTime": "2026-08-11T08:37:51.3336306",
     "checkOutDateTime": "2026-08-13T08:37:51.3336306",
     "registeredAt": "2026-08-10T08:37:51.3336306",
-    "status": "COMPLETED"
+    "status": "COMPLETED",
+    "otherCharges": 0.0,
+    "cashTendered": 0.0,
+    "changeDue": 0.0,
+    "requestedLateOption": 0
   }
 ]
