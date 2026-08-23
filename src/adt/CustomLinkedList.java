@@ -3,7 +3,7 @@ package adt;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class CustomLinkedList<T> implements ListInterface<T>, Iterable<T> {
+public class CustomLinkedList<T> implements ListInterface<T> {
 
     private class Node {
         private T data;
@@ -168,7 +168,8 @@ public class CustomLinkedList<T> implements ListInterface<T>, Iterable<T> {
     }
     
     /**
-     * [add-on method] PANG JIA YIE: Removes and returns the last entry (used for Rollback / Undo in Housekeeping)
+     * [add-on method] PANG JIA YIE: Removes and returns the last entry 
+     * (used for Rollback / Undo in Housekeeping)
      */
     @Override
     public T removeLast() {
