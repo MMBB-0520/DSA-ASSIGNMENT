@@ -66,63 +66,43 @@ public class WalkInRegistrationUI {
     }
 
     public void registerBooking() {
-        String name;
-        do {
-            System.out.print("Guest Name: ");
-            name = sc.nextLine().trim();
-            if (name.isEmpty() || !name.matches("[a-zA-Z .'-]+")) {
-                System.out.println("Invalid name - letters only, cannot be empty.");
-                name = "";
-            }
-        } while (name.isEmpty());
-
-        String contact;
-        do {
-            System.out.print("Contact Number (digits only): ");
-            contact = sc.nextLine().trim();
-            if (!contact.matches("\\d{7,15}")) {
-                System.out.println("Invalid contact number - enter 7 to 15 digits, no letters or symbols.");
-                contact = "";
-            }
-        } while (contact.isEmpty());
-
-        String icPassport;
-        do {
-            System.out.print("IC/Passport No: ");
-            icPassport = sc.nextLine().trim();
-
-            if (icPassport.isEmpty()) {
-                System.out.println("IC/Passport No cannot be empty.");
-
-            } else if (icPassport.matches("\\d+")) {
-                if (!icPassport.matches("\\d{12}")) {
-                    System.out.println("IC must contain 12 digits.");
-                    icPassport = "";
-                }
-            } else {
-                if (!icPassport.matches("[A-Za-z0-9]{6,15}")) {
-                    System.out.println("Invalid Passport format.");
-                    icPassport = "";
-                }
-            }
-        } while (icPassport.isEmpty());
-
+        String promptName = promptGuestName();
+        String contact = promptContactNumber();
+        String icPassport = promptICPassport();
         String roomType = promptRoomType();
         int numGuests = promptIntInRange("Number of Guests (1-6): ", 1, 6);
 
-        LocalDateTime checkIn = promptDateTime("Check-In Date & Time (yyyy-MM-dd HH:mm, now or later): ", null);
+        // 1. Walk-in automatically targets TODAY
+        LocalDateTime checkInNow = LocalDateTime.now();
+        System.out.println("\n[WALK-IN] Check-In date automatically set to today: " + checkInNow.format(DATETIME_FORMAT));
+
+        // 2. Prompt ONLY for Check-Out date
         LocalDateTime checkOut;
         while (true) {
-            checkOut = promptDateTime("Check-Out Date & Time (yyyy-MM-dd HH:mm): ", null);
-            if (!checkOut.isAfter(checkIn)) {
-                System.out.println("Check-out must be after check-in.");
-                continue;
+            checkOut = promptDateTime("Check-Out Date & Time (yyyy-MM-dd HH:mm): ", checkInNow);
+            if (checkOut.isAfter(checkInNow)) {
+                break;
             }
-            break;
+            System.out.println("Check-out must be after check-in.");
         }
 
-        Booking booking = control.registerBooking(name, contact, icPassport, roomType, numGuests, checkIn, checkOut);
-        printInvoiceCard(booking);
+        // 3. Check if current day has a free room slot
+        if (control.isRoomAvailable(roomType, checkInNow, checkOut)) {
+            Booking booking = control.registerBooking(promptName, contact, icPassport, roomType, numGuests, checkInNow, checkOut);
+            System.out.println("\n[SUCCESS] Room available for today! Booking confirmed.");
+            printInvoiceCard(booking);
+        } else {
+            // 4. NO room for present day -> Offer Advance Booking for future dates
+            System.out.println("\n[NO VACANCY] No " + roomType + " rooms available for today.");
+            System.out.print("Would you like to make an advance booking for a future date instead? (Y/N): ");
+            String choice = sc.nextLine().trim();
+
+            if (choice.equalsIgnoreCase("Y")) {
+                attemptAdvanceBooking(promptName, contact, roomType, numGuests);
+            } else {
+                System.out.println("Customer declined advance booking. Transaction ended.");
+            }
+        }
     }
 
     private void printInvoiceCard(Booking booking) {

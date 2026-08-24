@@ -28,5 +28,29 @@
     "guestName": "Sabrina",
     "contactNumber": "0147435699",
     "icPassport": "031230145278"
+  },
+  {
+    "guestId": "G1006",
+    "guestName": "alex",
+    "contactNumber": "0182030235",
+    "icPassport": "050821070475"
+  },
+  {
+    "guestId": "G1007",
+    "guestName": "test",
+    "contactNumber": "109387614",
+    "icPassport": "123456789012"
+  },
+  {
+    "guestId": "G1008",
+    "guestName": "test",
+    "contactNumber": "0182030235",
+    "icPassport": "123456789012"
+  },
+  {
+    "guestId": "G1009",
+    "guestName": "test",
+    "contactNumber": "098765432",
+    "icPassport": "050821070475"
   }
 ]

@@ -176,21 +176,22 @@ public class WalkInRegistrationUI {
     // Advance bookings must be for a future date - NOT today (per policy: walk-in
     // only covers the present day, advance only covers future dates).
     private LocalDateTime promptFutureCheckInDateTime() {
-        while (true) {
-            System.out.print("Check-In Date & Time (yyyy-MM-dd HH:mm) - must be a future date, not today: ");
-            String input = sc.nextLine().trim();
-            try {
-                LocalDateTime dt = LocalDateTime.parse(input, DATETIME_FORMAT);
-                if (!dt.toLocalDate().isAfter(LocalDate.now())) {
-                    System.out.println("Advance bookings must be for a future date, not today. Try again.");
-                    continue;
-                }
-                return dt;
-            } catch (DateTimeParseException e) {
-                System.out.println("Invalid format - use yyyy-MM-dd HH:mm, e.g. 2026-08-15 14:00.");
-            }
+    while (true) {
+        System.out.print("Check-In Date & Time (yyyy-MM-dd HH:mm): ");
+        String input = sc.nextLine().trim();
+        try {
+            LocalDateTime dt = LocalDateTime.parse(input, DATETIME_FORMAT);
+// Must be AFTER today (tomorrow or later)
+if (!dt.toLocalDate().isAfter(LocalDate.now())) {
+    System.out.println("Advance bookings must be for a future date (tomorrow onwards), not today. Try again.");
+    continue;
+}
+return dt;
+        } catch (DateTimeParseException e) {
+            System.out.println("Invalid format - use yyyy-MM-dd HH:mm, e.g. 2026-08-15 14:00.");
         }
     }
+}
 
     private String promptRoomType() {
         String[] roomTypes = WalkInRegistrationControl.ROOM_TYPES;
