@@ -14,10 +14,13 @@ import entity.Bill;
 import entity.Booking;
 import entity.Guest;
 import entity.Room;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Iterator;
 
 /**
- * Control class for Front-Desk Search module.
+ * Control class for Front-Desk Service module.
  * Best Practice 1: Declares ADT variable using interface type (BSTInterface).
  * Best Practice 2: Declares Data Access Objects using Interface types
  * (BookingDAO, RoomDAO, GuestDAO).
@@ -43,9 +46,9 @@ public class FrontDeskServiceControl {
     /**
      * Loads bookings from DAO into the Binary Search Tree.
      * Auto-assigns available rooms for CONFIRMED bookings whose check-in date is
-     * today or past.
+     * today or past. Evaluates 23:59 No-Show cutoff rules.
      */
-    private void loadData() {
+    public void loadData() {
         bookingTree.clear();
         Booking[] loaded = bookingDAO.getAllBookings();
         Room[] allRooms = roomDAO.getAllRooms();
@@ -56,25 +59,32 @@ public class FrontDeskServiceControl {
         if (loaded != null && loaded.length > 0) {
             for (Booking b : loaded) {
                 if (b != null && b.getConfirmationNo() != null) {
-                    // 1. Auto-cancel NO-SHOW bookings: If RESERVED or CONFIRMED and past
-                    // checkInDateTime + 15 mins without check-in
-                    if ((Booking.STATUS_RESERVED.equalsIgnoreCase(b.getStatus())
-                            || Booking.STATUS_CONFIRMED.equalsIgnoreCase(b.getStatus()))
-                            && b.getCheckInDateTime() != null
-                            && java.time.LocalDateTime.now().isAfter(b.getCheckInDateTime().plusMinutes(15))) {
+                    // 1. Auto-mark NO-SHOW bookings
+                    LocalDateTime noShowCutoff = (b.getCheckInDateTime() != null)
+                            ? b.getCheckInDateTime().toLocalDate().atTime(23, 59)
+                            : null;
 
-                        b.setStatus(Booking.STATUS_CANCELLED);
+                    if ((Booking.STATUS_RESERVED.equalsIgnoreCase(b.getStatus())
+                            || Booking.STATUS_CONFIRMED.equalsIgnoreCase(b.getStatus())
+                            || Booking.STATUS_PENDING.equalsIgnoreCase(b.getStatus()))
+                            && noShowCutoff != null
+                            && LocalDateTime.now().isAfter(noShowCutoff)) {
+
+                        b.setStatus(Booking.STATUS_NO_SHOW);
                         bookingUpdated = true;
 
                         // Release assigned room back to AVAILABLE if any
                         if (b.getRoomNo() != null && !b.getRoomNo().isEmpty()
                                 && !"Unassigned".equalsIgnoreCase(b.getRoomNo())) {
                             if (allRooms != null) {
-                                for (Room r : allRooms) {
-                                    if (r != null && r.getRoomNo().equalsIgnoreCase(b.getRoomNo())) {
-                                        r.setStatus(Room.STATUS_AVAILABLE);
-                                        roomUpdated = true;
-                                        break;
+                                String[] roomNos = b.getRoomNo().split(",\\s*");
+                                for (String rNo : roomNos) {
+                                    for (Room r : allRooms) {
+                                        if (r != null && r.getRoomNo().equalsIgnoreCase(rNo.trim())) {
+                                            r.setStatus(Room.STATUS_AVAILABLE);
+                                            roomUpdated = true;
+                                            break;
+                                        }
                                     }
                                 }
                             }
@@ -87,20 +97,26 @@ public class FrontDeskServiceControl {
                             && (b.getRoomNo() == null || b.getRoomNo().isEmpty()
                                     || "Unassigned".equalsIgnoreCase(b.getRoomNo()))
                             && b.getCheckInDateTime() != null
-                            && !b.getCheckInDateTime().toLocalDate().isAfter(java.time.LocalDate.now())) {
+                            && !b.getCheckInDateTime().toLocalDate().isAfter(LocalDate.now())) {
 
                         if (allRooms != null) {
+                            int needed = b.getNumOfRooms() > 0 ? b.getNumOfRooms() : 1;
+                            ListInterface<String> assignedRooms = new CustomLinkedList<>();
                             for (Room r : allRooms) {
                                 if (r != null && r.getRoomType().equalsIgnoreCase(b.getRoomType())
                                         && Room.STATUS_AVAILABLE.equalsIgnoreCase(r.getStatus())) {
-                                    b.setRoomNo(r.getRoomNo());
-                                    b.setStatus(Booking.STATUS_CONFIRMED); // Status becomes CONFIRMED once room is
-                                                                           // assigned!
+                                    assignedRooms.add(r.getRoomNo());
                                     r.setStatus(Room.STATUS_BOOKED);
                                     roomUpdated = true;
-                                    bookingUpdated = true;
-                                    break;
+                                    if (assignedRooms.size() == needed) {
+                                        break;
+                                    }
                                 }
+                            }
+                            if (!assignedRooms.isEmpty()) {
+                                b.setRoomNo(String.join(", ", assignedRooms));
+                                b.setStatus(Booking.STATUS_CONFIRMED);
+                                bookingUpdated = true;
                             }
                         }
                     }
@@ -109,27 +125,30 @@ public class FrontDeskServiceControl {
                     if (Booking.STATUS_CHECKED_IN.equalsIgnoreCase(b.getStatus())
                             && b.getRoomNo() != null && !b.getRoomNo().isEmpty()
                             && b.getCheckOutDateTime() != null
-                            && java.time.LocalDateTime.now().isAfter(b.getCheckOutDateTime())) {
+                            && LocalDateTime.now().isAfter(b.getCheckOutDateTime())) {
 
-                        long minutesOver = java.time.temporal.ChronoUnit.MINUTES.between(b.getCheckOutDateTime(),
-                                java.time.LocalDateTime.now());
+                        long minutesOver = ChronoUnit.MINUTES.between(b.getCheckOutDateTime(),
+                                LocalDateTime.now());
                         String lateRoomStatus;
                         if (minutesOver <= 30) {
-                            lateRoomStatus = Room.STATUS_LATE_30MINS;
-                        } else if (minutesOver <= 120) {
-                            lateRoomStatus = Room.STATUS_LATE_2HRS;
+                            lateRoomStatus = Room.STATUS_LATE_30MIN;
+                        } else if (minutesOver <= 60) {
+                            lateRoomStatus = Room.STATUS_LATE_1HRS;
                         } else {
-                            lateRoomStatus = Room.STATUS_LATE_4HRS;
+                            lateRoomStatus = Room.STATUS_LATE_2HRS;
                         }
 
                         if (allRooms != null) {
-                            for (Room r : allRooms) {
-                                if (r != null && r.getRoomNo().equalsIgnoreCase(b.getRoomNo())) {
-                                    if (!lateRoomStatus.equalsIgnoreCase(r.getStatus())) {
-                                        r.setStatus(lateRoomStatus);
-                                        roomUpdated = true;
+                            String[] roomNos = b.getRoomNo().split(",\\s*");
+                            for (String rNo : roomNos) {
+                                for (Room r : allRooms) {
+                                    if (r != null && r.getRoomNo().equalsIgnoreCase(rNo.trim())) {
+                                        if (!lateRoomStatus.equalsIgnoreCase(r.getStatus())) {
+                                            r.setStatus(lateRoomStatus);
+                                            roomUpdated = true;
+                                        }
+                                        break;
                                     }
-                                    break;
                                 }
                             }
                         }
@@ -213,16 +232,17 @@ public class FrontDeskServiceControl {
      * Registers a future reservation booking and persists changes to BST and JSON.
      */
     public Booking registerFutureBooking(String name, String contactNumber, String icPassport,
-            String roomType, double pricePerNight, int numGuests,
-            java.time.LocalDateTime checkIn, java.time.LocalDateTime checkOut, double depositPaid) {
+            String roomType, double pricePerNight, int numGuests, int numOfRooms,
+            LocalDateTime checkIn, LocalDateTime checkOut, double depositPaid) {
 
         Guest existingGuest = findGuestByContact(contactNumber);
         Guest guest = (existingGuest != null) ? existingGuest
                 : new Guest(generateGuestId(), name, contactNumber, icPassport);
 
         String confirmationNo = String.format("%08d", (int) (Math.random() * 90000000) + 10000000);
-        Booking booking = new Booking(confirmationNo, guest, roomType, pricePerNight, numGuests, checkIn, checkOut,
-                java.time.LocalDateTime.now());
+        Booking booking = new Booking(confirmationNo, guest, roomType, pricePerNight, numGuests, numOfRooms, checkIn,
+                checkOut,
+                LocalDateTime.now());
         booking.setStatus(Booking.STATUS_RESERVED);
         Bill bill = booking.getBill();
         bill.setCashTendered(depositPaid);
@@ -239,9 +259,12 @@ public class FrontDeskServiceControl {
 
     public Booking registerFutureBooking(String name, String contactNumber, String icPassport,
             String roomType, double pricePerNight, int numGuests,
-            java.time.LocalDateTime checkIn, java.time.LocalDateTime checkOut) {
-        return registerFutureBooking(name, contactNumber, icPassport, roomType, pricePerNight, numGuests, checkIn,
-                checkOut, pricePerNight * 0.30);
+            LocalDateTime checkIn, LocalDateTime checkOut) {
+        double nights = Math.max(1,
+                ChronoUnit.DAYS.between(checkIn.toLocalDate(), checkOut.toLocalDate()));
+        double roomChargeTotal = pricePerNight * nights;
+        return registerFutureBooking(name, contactNumber, icPassport, roomType, pricePerNight, numGuests, 1, checkIn,
+                checkOut, roomChargeTotal * 0.30);
     }
 
     /**
@@ -277,7 +300,17 @@ public class FrontDeskServiceControl {
         String status = booking.getStatus();
         if (Booking.STATUS_CHECKED_IN.equalsIgnoreCase(status)
                 || Booking.STATUS_CANCELLED.equalsIgnoreCase(status)
+                || Booking.STATUS_NO_SHOW.equalsIgnoreCase(status)
                 || Booking.STATUS_COMPLETED.equalsIgnoreCase(status)) {
+            return false;
+        }
+
+        // Validate early check-in before 3:00 PM on check-in date
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime checkInDate = booking.getCheckInDateTime();
+        if (checkInDate != null && checkInDate.toLocalDate().equals(now.toLocalDate()) && now.getHour() < 15) {
+            System.out.println(
+                    "\n[!] Error: Standard Check-In time starts at 3:00 PM (15:00). Check-in before 3:00 PM is not allowed.");
             return false;
         }
 
@@ -296,19 +329,29 @@ public class FrontDeskServiceControl {
         if (allRooms != null) {
             if (booking.getRoomNo() == null || booking.getRoomNo().isEmpty()
                     || "Unassigned".equalsIgnoreCase(booking.getRoomNo())) {
+                int needed = booking.getNumOfRooms() > 0 ? booking.getNumOfRooms() : 1;
+                ListInterface<String> assignedRooms = new CustomLinkedList<>();
                 for (Room room : allRooms) {
                     if (room != null && room.getRoomType().equalsIgnoreCase(booking.getRoomType())
                             && Room.STATUS_AVAILABLE.equalsIgnoreCase(room.getStatus())) {
-                        booking.setRoomNo(room.getRoomNo());
+                        assignedRooms.add(room.getRoomNo());
                         room.setStatus(Room.STATUS_BOOKED);
-                        break;
+                        if (assignedRooms.size() == needed) {
+                            break;
+                        }
                     }
                 }
+                if (!assignedRooms.isEmpty()) {
+                    booking.setRoomNo(String.join(", ", assignedRooms));
+                }
             } else {
-                for (Room room : allRooms) {
-                    if (room != null && room.getRoomNo().equalsIgnoreCase(booking.getRoomNo())) {
-                        room.setStatus(Room.STATUS_BOOKED);
-                        break;
+                String[] roomNos = booking.getRoomNo().split(",\\s*");
+                for (String rNo : roomNos) {
+                    for (Room room : allRooms) {
+                        if (room != null && room.getRoomNo().equalsIgnoreCase(rNo.trim())) {
+                            room.setStatus(Room.STATUS_BOOKED);
+                            break;
+                        }
                     }
                 }
             }
@@ -391,13 +434,18 @@ public class FrontDeskServiceControl {
         // Update assigned room status to DIRTY
         if (booking.getRoomNo() != null && !booking.getRoomNo().isEmpty()) {
             Room[] allRooms = roomDAO.getAllRooms();
-            for (Room room : allRooms) {
-                if (room != null && room.getRoomNo().equalsIgnoreCase(booking.getRoomNo())) {
-                    room.setStatus(Room.STATUS_DIRTY);
-                    break;
+            if (allRooms != null) {
+                String[] roomNos = booking.getRoomNo().split(",\\s*");
+                for (String rNo : roomNos) {
+                    for (Room room : allRooms) {
+                        if (room != null && room.getRoomNo().equalsIgnoreCase(rNo.trim())) {
+                            room.setStatus(Room.STATUS_DIRTY);
+                            break;
+                        }
+                    }
                 }
+                roomDAO.saveAllRooms(allRooms);
             }
-            roomDAO.saveAllRooms(allRooms);
         }
 
         bookingDAO.saveBooking(booking);
@@ -495,8 +543,8 @@ public class FrontDeskServiceControl {
                         && (b.getRoomNo() == null || b.getRoomNo().isEmpty()
                                 || "Unassigned".equalsIgnoreCase(b.getRoomNo()))
                         && b.getCheckInDateTime() != null
-                        && !b.getCheckInDateTime().toLocalDate().isAfter(java.time.LocalDate.now())) {
-                    available--;
+                        && !b.getCheckInDateTime().toLocalDate().isAfter(LocalDate.now())) {
+                    available -= (b.getNumOfRooms() > 0 ? b.getNumOfRooms() : 1);
                 }
             }
         }
@@ -566,8 +614,8 @@ public class FrontDeskServiceControl {
      * CHECKED_IN) that overlap with the target date range.
      * Prevents OVERBOOKING and protects against assigning DIRTY rooms.
      */
-    public int getAvailableRoomCountForPeriod(String roomType, java.time.LocalDateTime checkIn,
-            java.time.LocalDateTime checkOut) {
+    public int getAvailableRoomCountForPeriod(String roomType, LocalDateTime checkIn,
+            LocalDateTime checkOut) {
         if (roomType == null || checkIn == null || checkOut == null) {
             return 0;
         }
@@ -593,18 +641,18 @@ public class FrontDeskServiceControl {
 
                 String status = b.getStatus();
                 if (Booking.STATUS_CANCELLED.equalsIgnoreCase(status)
+                        || Booking.STATUS_NO_SHOW.equalsIgnoreCase(status)
                         || Booking.STATUS_COMPLETED.equalsIgnoreCase(status)) {
                     continue;
                 }
 
-                java.time.LocalDateTime bCheckIn = b.getCheckInDateTime();
-                java.time.LocalDateTime bCheckOut = b.getCheckOutDateTime();
+                LocalDateTime bCheckIn = b.getCheckInDateTime();
+                LocalDateTime bCheckOut = b.getCheckOutDateTime();
 
                 if (bCheckIn != null && bCheckOut != null) {
-                    // Standard interval overlap check: [bCheckIn, bCheckOut) overlaps with
-                    // [checkIn, checkOut)
+                    // Standard interval overlap check
                     if (bCheckIn.isBefore(checkOut) && bCheckOut.isAfter(checkIn)) {
-                        activeOverlappingBookings++;
+                        activeOverlappingBookings += (b.getNumOfRooms() > 0 ? b.getNumOfRooms() : 1);
                     }
                 }
             }
@@ -626,15 +674,28 @@ public class FrontDeskServiceControl {
                 if (r != null) {
                     String status = r.getStatus();
                     if (Room.STATUS_DIRTY.equalsIgnoreCase(status)
-                            || Room.STATUS_LATE_30MINS.equalsIgnoreCase(status)
-                            || Room.STATUS_LATE_2HRS.equalsIgnoreCase(status)
-                            || Room.STATUS_LATE_4HRS.equalsIgnoreCase(status)) {
+                            || Room.STATUS_LATE_30MIN.equalsIgnoreCase(status)
+                            || Room.STATUS_LATE_1HRS.equalsIgnoreCase(status)
+                            || Room.STATUS_LATE_2HRS.equalsIgnoreCase(status)) {
                         alertList.add(r);
                     }
                 }
             }
         }
         return alertList;
+    }
+
+    public int getStandardCleaningDurationMinutes(String roomType) {
+        if (roomType == null)
+            return 30;
+        String type = roomType.trim().toLowerCase();
+        if (type.contains("deluxe")) {
+            return 40;
+        } else if (type.contains("suite")) {
+            return 45;
+        } else {
+            return 30;
+        }
     }
 
     /**
@@ -739,7 +800,8 @@ public class FrontDeskServiceControl {
         Iterator<Booking> iterator = getBookingIterator();
         while (iterator != null && iterator.hasNext()) {
             Booking b = iterator.next();
-            if (b != null && b.getBill() != null && Bill.PAYMENT_PAID_CASH.equalsIgnoreCase(b.getBill().getPaymentStatus())) {
+            if (b != null && b.getBill() != null
+                    && Bill.PAYMENT_PAID_CASH.equalsIgnoreCase(b.getBill().getPaymentStatus())) {
                 count++;
             }
         }
@@ -768,5 +830,82 @@ public class FrontDeskServiceControl {
             }
         }
         return rev;
+    }
+
+    /**
+     * Cancels a booking with automatic 24-hour refund/forfeit evaluation:
+     * - Cancelled >= 24 hours before Check-In: Deposit is fully REFUNDABLE.
+     * - Cancelled < 24 hours before Check-In: Deposit is FORFEITED (RM 0.00
+     * refund).
+     * Releases assigned room(s) back to AVAILABLE.
+     */
+    public String cancelBooking(String confirmationNo) {
+        Booking booking = searchByConfirmationNo(confirmationNo);
+        if (booking == null) {
+            return "[X] Error: Booking not found for Confirmation No: " + confirmationNo;
+        }
+
+        String status = booking.getStatus();
+        if (Booking.STATUS_CANCELLED.equalsIgnoreCase(status)) {
+            return "[!] Notice: Booking is ALREADY CANCELLED.";
+        }
+        if (Booking.STATUS_CHECKED_IN.equalsIgnoreCase(status) || Booking.STATUS_COMPLETED.equalsIgnoreCase(status)) {
+            return "[!] Error: Cannot cancel a booking that is currently " + status
+                    + ". Please process Check-Out instead.";
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime checkInTime = booking.getCheckInDateTime();
+
+        long hoursUntilCheckIn = (checkInTime != null)
+                ? ChronoUnit.HOURS.between(now, checkInTime)
+                : 0;
+
+        Bill bill = booking.getBill();
+        double depositPaid = (bill != null) ? bill.getCashTendered() : 0.0;
+        boolean isRefundable = (hoursUntilCheckIn >= 24);
+
+        if (isRefundable) {
+            if (bill != null) {
+                bill.setPaymentStatus("REFUNDED");
+                bill.setChangeDue(depositPaid);
+            }
+        } else {
+            if (bill != null) {
+                bill.setPaymentStatus("FORFEITED");
+                bill.setChangeDue(0.0);
+            }
+        }
+
+        booking.setStatus(Booking.STATUS_CANCELLED);
+
+        // Release assigned room(s) back to AVAILABLE
+        if (booking.getRoomNo() != null && !booking.getRoomNo().isEmpty()
+                && !"Unassigned".equalsIgnoreCase(booking.getRoomNo())) {
+            Room[] allRooms = roomDAO.getAllRooms();
+            if (allRooms != null) {
+                String[] roomNos = booking.getRoomNo().split(",\\s*");
+                for (String rNo : roomNos) {
+                    for (Room r : allRooms) {
+                        if (r != null && r.getRoomNo().equalsIgnoreCase(rNo.trim())) {
+                            r.setStatus(Room.STATUS_AVAILABLE);
+                        }
+                    }
+                }
+                roomDAO.saveAllRooms(allRooms);
+            }
+        }
+
+        bookingDAO.saveBooking(booking);
+
+        if (isRefundable) {
+            return String.format(
+                    "SUCCESS_REFUND:%d hrs prior to Check-In (>= 24 hrs rule). Full deposit of RM %.2f REFUNDED to guest.",
+                    hoursUntilCheckIn, depositPaid);
+        } else {
+            return String.format(
+                    "SUCCESS_FORFEIT:%d hrs prior to Check-In (< 24 hrs rule). Deposit of RM %.2f FORFEITED (RM 0.00 Refund).",
+                    hoursUntilCheckIn, depositPaid);
+        }
     }
 }

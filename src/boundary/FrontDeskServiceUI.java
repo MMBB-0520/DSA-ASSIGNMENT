@@ -5,9 +5,11 @@ import entity.Bill;
 import entity.Booking;
 import entity.Guest;
 import entity.Room;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
-import java.time.LocalDateTime;
 import util.InputUtil;
 
 /**
@@ -38,23 +40,29 @@ public class FrontDeskServiceUI {
         do {
             control.reloadData();
             System.out.println("\n" + DIVIDER);
-            System.out.println(" FRONT-DESK SERVICE & INQUIRY (BST ADT & O(log n) Search)");
+            System.out.println(" FRONT-DESK SERVICE & INQUIRY");
             System.out.println(DIVIDER);
-            System.out.println("[1] Instant Search Guest Record & Check-In (BST O(log n) Search)");
-            System.out.println("[2] Search & Filter Available Rooms (Iterate -> Filter -> Sort)");
-            System.out.println("[3] Search Bill, Calculate Late Fees & Process Check-Out (Cash / Deposit Refund)");
-            System.out.println("[4] View ADT & Algorithm Performance Summary");
+            System.out.println("[1] Guest Lookup & Check-In");
+            System.out.println("[2] Room Availability Search & Filtering");
+            System.out.println("[3] Advance Reservation (Future Booking)");
+            System.out.println("[4] Check-Out Processing");
+            System.out.println("[5] Cancel Booking & Refund Policy");
+            System.out.println("[6] Pre-Request Late Check-Out");
+            System.out.println("[7] ADT & Algorithm Performance Summary");
             System.out.println("[0] Return to Main Menu");
             System.out.println(DIVIDER);
             System.out.print("Enter Choice: ");
 
-            choice = InputUtil.readIntInRange(scanner, "Enter Choice [0-4]: ", 0, 4);
+            choice = InputUtil.readIntInRange(scanner, "Enter Choice [0-7]: ", 0, 7);
 
             switch (choice) {
                 case 1 -> searchByConfirmationNo();
                 case 2 -> searchAvailableRoomsUI();
-                case 3 -> searchBillAndCheckOutUI();
-                case 4 -> showAdtSummary();
+                case 3 -> processFutureReservationUI();
+                case 4 -> searchBillAndCheckOutUI();
+                case 5 -> cancelBookingUI();
+                case 6 -> preRequestLateCheckOutUI();
+                case 7 -> showAdtSummary();
                 case 0 -> System.out.println("\nReturning to Main Menu...");
                 default -> System.out.println("\nInvalid choice! Please enter a valid menu option.");
             }
@@ -69,14 +77,8 @@ public class FrontDeskServiceUI {
         System.out.println("\n" + SUB_DIVIDER);
         System.out.println(" INSTANT GUEST LOOKUP (BST SEARCH)");
         System.out.println(SUB_DIVIDER);
-        System.out.print("Enter 8-Digit Confirmation Number (e.g. 84920183): ");
-        String confirmationNo = scanner.nextLine().trim();
-
-        if (!confirmationNo.matches("\\d{8}")) {
-            System.out.println("\n[!] Error: Confirmation Number must be exactly 8 digits.");
-            System.out.println("    (Sample valid numbers for testing: 84920183, 10293847, 59302148)");
-            return;
-        }
+        String confirmationNo = InputUtil.readConfirmationNo(scanner,
+                "Enter 8-Digit Confirmation Number (e.g. 84920183): ");
 
         long startTime = System.nanoTime();
         Booking booking = control.searchByConfirmationNo(confirmationNo);
@@ -139,10 +141,12 @@ public class FrontDeskServiceUI {
         System.out.println(" LATE CHECK-OUT DURATION SELECTION (PRE-REQUEST)");
         System.out.println(SUB_DIVIDER);
         System.out.println(
-                " [1] 30 mins - 2 hrs   : +25% Price/Night (+RM " + String.format("%.2f", pricePerNight * 0.25) + ")");
+                " [1] 30 mins (until 12:30) : +25% Price/Night (+RM " + String.format("%.2f", pricePerNight * 0.25)
+                        + ")");
         System.out.println(
-                " [2] 2 - 4 hrs         : +50% Price/Night (+RM " + String.format("%.2f", pricePerNight * 0.50) + ")");
-        System.out.println(" [3] > 4 hrs           : +100% Price/Night / Extra 1 Night (+RM "
+                " [2] 1 hr (until 13:00)    : +50% Price/Night (+RM " + String.format("%.2f", pricePerNight * 0.50)
+                        + ")");
+        System.out.println(" [3] 2 hrs (until 14:00)   : +100% Price/Night (+RM "
                 + String.format("%.2f", pricePerNight * 1.00) + ")");
         System.out.println(" [0] Cancel / Reset");
         System.out.println(SUB_DIVIDER);
@@ -154,10 +158,10 @@ public class FrontDeskServiceUI {
         if (opt > 0) {
             System.out.printf("Pre-Requested Late Fee: RM %.2f%n", lateFee);
             boolean payAns = InputUtil.readYesNo(scanner,
-                    "Collect cash for pre-requested late fee now? (Y/N): ");
+                    "Collect payment for pre-requested late fee now? (Y/N): ");
             if (payAns) {
                 double cash = InputUtil.readDoubleMin(scanner,
-                        String.format("Enter Cash Received (Min RM %.2f): ", lateFee), lateFee);
+                        String.format("Enter Amount Received (Min RM %.2f): ", lateFee), lateFee);
                 cashPaidForLate = lateFee;
                 System.out.printf("Change Due: RM %.2f%n", cash - lateFee);
             }
@@ -168,6 +172,81 @@ public class FrontDeskServiceUI {
         } else {
             System.out.println("\n[!] Error saving pre-requested late check-out.");
         }
+    }
+
+    /**
+     * Dedicated UI entry for pre-requesting Late Check-Out options for a checked-in
+     * guest.
+     */
+    private void preRequestLateCheckOutUI() {
+        System.out.println("\n" + SUB_DIVIDER);
+        System.out.println(" PRE-REQUEST LATE CHECK-OUT");
+        System.out.println(SUB_DIVIDER);
+        String confirmationNo = InputUtil.readConfirmationNo(scanner,
+                "Enter 8-Digit Confirmation Number (e.g. 84920183): ");
+
+        Booking booking = control.searchByConfirmationNo(confirmationNo);
+        if (booking == null) {
+            System.out.println("\n[X] No record found for Confirmation Number: " + confirmationNo);
+            return;
+        }
+
+        if (!Booking.STATUS_CHECKED_IN.equalsIgnoreCase(booking.getStatus())) {
+            System.out.println(
+                    "\n[!] Notice: Late Check-Out can only be pre-requested for guests who are currently CHECKED_IN.");
+            System.out.println("    Current Booking Status: " + booking.getStatus());
+            return;
+        }
+
+        promptPreRequestLateCheckOut(booking);
+    }
+
+    /**
+     * Dedicated UI entry for cancelling a booking with 24-hour refund/forfeit
+     * evaluation.
+     */
+    private void cancelBookingUI() {
+        System.out.println("\n" + SUB_DIVIDER);
+        System.out.println(" CANCEL BOOKING & REFUND PROCESSING (24-HOUR CANCELLATION POLICY)");
+        System.out.println(SUB_DIVIDER);
+        String confirmationNo = InputUtil.readConfirmationNo(scanner,
+                "Enter 8-Digit Confirmation Number to Cancel (e.g. 84920183): ");
+
+        Booking booking = control.searchByConfirmationNo(confirmationNo);
+        if (booking == null) {
+            System.out.println("\n[X] No record found for Confirmation Number: " + confirmationNo);
+            return;
+        }
+
+        displayCompleteGuestDetails(booking);
+
+        if (Booking.STATUS_CANCELLED.equalsIgnoreCase(booking.getStatus())
+                || Booking.STATUS_CHECKED_IN.equalsIgnoreCase(booking.getStatus())
+                || Booking.STATUS_COMPLETED.equalsIgnoreCase(booking.getStatus())) {
+            System.out.println(
+                    "\n[!] Notice: Booking status is '" + booking.getStatus() + "'. Cannot cancel this booking.");
+            return;
+        }
+
+        boolean confirm = InputUtil.readYesNo(scanner,
+                "\nAre you sure you want to CANCEL this booking? (Y/N): ");
+        if (!confirm) {
+            System.out.println("Cancellation process aborted.");
+            return;
+        }
+
+        String resultMsg = control.cancelBooking(confirmationNo);
+        if (resultMsg.startsWith("SUCCESS_REFUND:")) {
+            System.out.println("\n [√] CANCELLATION COMPLETED - FULL REFUND GRANTED");
+            System.out.println("     " + resultMsg.substring("SUCCESS_REFUND:".length()));
+        } else if (resultMsg.startsWith("SUCCESS_FORFEIT:")) {
+            System.out.println("\n [!] CANCELLATION COMPLETED - DEPOSIT FORFEITED (< 24 hrs rule)");
+            System.out.println("     " + resultMsg.substring("SUCCESS_FORFEIT:".length()));
+        } else {
+            System.out.println(" " + resultMsg);
+        }
+        System.out.print("\nPress Enter to continue...");
+        scanner.nextLine();
     }
 
     /**
@@ -192,6 +271,7 @@ public class FrontDeskServiceUI {
         System.out.println(SUB_DIVIDER);
         System.out.println(" ROOM & STAY INFORMATION:");
         System.out.printf("  - Room Type     : %s%n", booking.getRoomType());
+        System.out.printf("  - Number of Rooms: %d room(s)%n", booking.getNumOfRooms());
         System.out.printf("  - Assigned Room : %s%n", roomInfo);
         System.out.printf("  - Guests Count  : %d person(s)%n", booking.getNumGuests());
         System.out.printf("  - Check-In Time : %s%n", booking.getCheckInDateTime().format(DATETIME_FORMAT));
@@ -199,8 +279,8 @@ public class FrontDeskServiceUI {
         System.out.printf("  - Duration      : %d night(s)%n", booking.getNights());
         System.out.println(SUB_DIVIDER);
         System.out.println(" BILLING SUMMARY:");
-        System.out.printf("  - Room Charge   : RM %8.2f  (RM %.2f / night)%n",
-                bill.getRoomCharge(), booking.getPricePerNight());
+        System.out.printf("  - Room Charge   : RM %8.2f  (%d room(s) @ RM %.2f / night)%n",
+                bill.getRoomCharge(), booking.getNumOfRooms(), booking.getPricePerNight());
         System.out.printf("  - Service Charge: RM %8.2f  (10%%)%n", bill.getServiceCharge());
         System.out.printf("  - Other Charges : RM %8.2f  (Tourism & Taxes)%n", bill.getOtherCharges());
         System.out.printf("  - Total Amount  : RM %8.2f%n", bill.getGrandTotal());
@@ -240,8 +320,8 @@ public class FrontDeskServiceUI {
 
         System.out.println("\nSelect Action:");
         System.out.println(" 1. View & Filter Available Rooms (By Type / Max Price / Sort)");
-        System.out.println(" 2. Walk-In Registration (Check-In NOW / Today)");
-        System.out.println(" 3. Future Reservation (Advance Booking for Future Dates)");
+        System.out.println(" 2. Walk-In Registration");
+        System.out.println(" 3. Future Reservation");
         System.out.println(" 0. Return to Menu");
         int actionChoice = InputUtil.readIntInRange(scanner, "Enter Choice [0-3]: ", 0, 3);
 
@@ -260,12 +340,10 @@ public class FrontDeskServiceUI {
                 default -> "";
             };
 
+            System.out.println("\nSelect Sorting Option:");
             int sortOpt = InputUtil.readIntInRangeWithDefault(scanner,
-                    "Select Sort Order: 1. By Room Number | 2. By Price per Night [Default 1]: ", 1, 2, 1);
+                    "1. By Room Number | 2. By Price per Night: ", 1, 2, 1);
             String sortBy = (sortOpt == 2) ? "Price" : "RoomNo";
-
-            System.out.println("\n[Processing Pipeline: 1. Iterate Rooms -> 2. Filter Available -> 3. Sort by "
-                    + sortBy + "]");
 
             Room[] results = control.searchAvailableRooms(roomType, sortBy);
 
@@ -314,10 +392,15 @@ public class FrontDeskServiceUI {
         System.out.println(" ADVANCE RESERVATION (FUTURE BOOKING)");
         System.out.println(SUB_DIVIDER);
 
-        LocalDateTime checkIn = InputUtil.readFutureDateTime(scanner,
-                "Enter Future Check-In Date & Time (yyyy-MM-dd HH:mm, e.g. 2026-08-20 15:00): ", DATETIME_FORMAT);
-        int nights = InputUtil.readIntInRange(scanner, "Enter Number of Nights Staying (1-30): ", 1, 30);
-        LocalDateTime checkOut = checkIn.plusDays(nights);
+        LocalDate checkInDate = InputUtil.readFutureDate(scanner,
+                "Enter Future Check-In Date (yyyy-MM-dd): ");
+        LocalTime arrivalTime = InputUtil.readTimeMinWithDefault(scanner,
+                "Enter Estimated Arrival Time (HH:mm) [Press Enter for Standard Check-In Time (13:00)]: ",
+                LocalTime.of(13, 0), LocalTime.of(13, 0));
+        LocalDateTime checkIn = LocalDateTime.of(checkInDate, arrivalTime);
+        int nights = InputUtil.readIntInRangeWithDefault(scanner,
+                "Enter Number of Nights Staying (1-30) [Default 1]: ", 1, 30, 1);
+        LocalDateTime checkOut = checkIn.plusDays(nights).withHour(12).withMinute(0);
 
         int stdAvail = control.getAvailableRoomCountForPeriod("Standard", checkIn, checkOut);
         int dlxAvail = control.getAvailableRoomCountForPeriod("Deluxe", checkIn, checkOut);
@@ -359,6 +442,10 @@ public class FrontDeskServiceUI {
             return;
         }
 
+        int numOfRooms = InputUtil.readIntInRangeWithDefault(scanner,
+                String.format("Enter Number of Rooms to Book (1-%d) [Default 1]: ", availableForSelected), 1,
+                availableForSelected, 1);
+
         // Base rate for calculating advance booking deposit
         double[] priceRange = control.getRoomTypePriceRange(roomType);
         double pricePerNight = (priceRange != null && priceRange.length > 0 && priceRange[0] > 0) ? priceRange[0]
@@ -386,24 +473,27 @@ public class FrontDeskServiceUI {
             icPassport = InputUtil.readIcPassport(scanner);
         }
 
-        double roomChargeTotal = pricePerNight * nights;
+        double roomChargeTotal = pricePerNight * nights * numOfRooms;
         double depositRequired = roomChargeTotal * 0.30;
 
         System.out.println("\n" + SUB_DIVIDER);
         System.out.println(" RESERVATION SUMMARY & 30% DEPOSIT DUE");
         System.out.println(SUB_DIVIDER);
         System.out.printf(" Room Type         : %s (Base Rate: RM %.2f / night)%n", roomType, pricePerNight);
+        System.out.printf(" Number of Rooms   : %d room(s)%n", numOfRooms);
         System.out.printf(" Duration          : %s to %s (%d Night(s))%n", checkIn.format(DATETIME_FORMAT),
                 checkOut.format(DATETIME_FORMAT), nights);
-        System.out.printf(" %-65s RM %10.2f%n", "Est. Room Charge", roomChargeTotal);
+        System.out.printf(" %-65s RM %10.2f%n",
+                String.format("Est. Room Charge (%d room(s) @ RM %.2f/night)", numOfRooms, pricePerNight),
+                roomChargeTotal);
         System.out.printf(" %-65s RM %10.2f%n", "30% Deposit Due", depositRequired);
         System.out.println(SUB_DIVIDER);
 
         double cashTendered = InputUtil.readDoubleMin(scanner,
-                String.format("Enter Cash Deposit Received (Min RM %.2f): ", depositRequired), depositRequired);
+                String.format("Enter Deposit Amount Received (Min RM %.2f): ", depositRequired), depositRequired);
 
         Booking booking = control.registerFutureBooking(name, contact, icPassport, roomType, pricePerNight, numGuests,
-                checkIn, checkOut);
+                numOfRooms, checkIn, checkOut, depositRequired);
         double change = cashTendered - depositRequired;
 
         System.out.println("\n" + DIVIDER);
@@ -411,8 +501,9 @@ public class FrontDeskServiceUI {
         System.out.println(DIVIDER);
         System.out.printf("  Confirmation No   : %s%n", booking.getConfirmationNo());
         System.out.printf("  Booking Status    : %s%n", booking.getStatus());
+        System.out.printf("  Rooms Booked      : %d room(s) (%s)%n", numOfRooms, roomType);
         System.out.printf(" %-65s RM %10.2f%n", "30% Deposit Due", depositRequired);
-        System.out.printf(" %-65s RM %10.2f%n", "Cash Received", cashTendered);
+        System.out.printf(" %-65s RM %10.2f%n", "Amount Received", cashTendered);
         System.out.printf(" %-65s RM %10.2f%n", "Change Due", change);
         System.out.println(DIVIDER);
     }
@@ -429,13 +520,7 @@ public class FrontDeskServiceUI {
         System.out.println("\n" + SUB_DIVIDER);
         System.out.println(" SEARCH BILL & PROCESS CHECK-OUT");
         System.out.println(SUB_DIVIDER);
-        System.out.print("Enter 8-Digit Confirmation Number: ");
-        String confirmationNo = scanner.nextLine().trim();
-
-        if (!confirmationNo.matches("\\d{8}")) {
-            System.out.println("\n[!] Error: Confirmation Number must be exactly 8 digits.");
-            return;
-        }
+        String confirmationNo = InputUtil.readConfirmationNo(scanner, "Enter 8-Digit Confirmation Number: ");
 
         Booking booking = control.searchByConfirmationNo(confirmationNo);
         if (booking == null) {
@@ -450,6 +535,10 @@ public class FrontDeskServiceUI {
         }
         if (Booking.STATUS_CANCELLED.equalsIgnoreCase(booking.getStatus())) {
             System.out.println("\n[!] Notice: Cannot check-out a CANCELLED booking.");
+            return;
+        }
+        if (Booking.STATUS_NO_SHOW.equalsIgnoreCase(booking.getStatus())) {
+            System.out.println("\n[!] Notice: Cannot check-out a NO-SHOW booking (Status: NO_SHOW).");
             return;
         }
         if (Booking.STATUS_PENDING.equalsIgnoreCase(booking.getStatus())) {
@@ -470,17 +559,17 @@ public class FrontDeskServiceUI {
         double netDue = bill.getNetDue(lateCharge);
 
         String lateOptLabel = switch (lateOption) {
-            case 1 -> "30 mins - 2 hrs (+25% Auto)";
-            case 2 -> "2 - 4 hrs (+50% Auto)";
-            case 3 -> "> 4 hrs (+100% / Extra 1 Night Auto)";
+            case 1 -> "30 mins (until 12:30) (+25% Auto)";
+            case 2 -> "1 hr (until 13:00) (+50% Auto)";
+            case 3 -> "2 hrs (until 14:00) (+100% Auto)";
             default -> "Grace Period / On Time (Free)";
         };
 
         if (bill.getRequestedLateOption() > 0) {
             lateOptLabel = switch (bill.getRequestedLateOption()) {
-                case 1 -> "30 mins - 2 hrs (+25% Pre-Requested)";
-                case 2 -> "2 - 4 hrs (+50% Pre-Requested)";
-                case 3 -> "> 4 hrs (+100% Pre-Requested)";
+                case 1 -> "30 mins (until 12:30) (+25% Pre-Requested)";
+                case 2 -> "1 hr (until 13:00) (+50% Pre-Requested)";
+                case 3 -> "2 hrs (until 14:00) (+100% Pre-Requested)";
                 default -> lateOptLabel;
             };
         }
@@ -560,7 +649,7 @@ public class FrontDeskServiceUI {
         double cashTendered = 0.0;
         if (netDue > 0) {
             cashTendered = InputUtil.readDoubleMin(scanner,
-                    String.format("Enter Cash Amount Received from Customer (Min RM %.2f): ", netDue), netDue);
+                    String.format("Enter Payment Amount Received (Min RM %.2f): ", netDue), netDue);
         }
 
         boolean success = control.processCheckOut(confirmationNo, cashTendered);
@@ -600,8 +689,8 @@ public class FrontDeskServiceUI {
         System.out.println("\n" + DIVIDER);
         System.out.println(" CHECK-IN STATEMENT & DEPOSIT BREAKDOWN");
         System.out.println(DIVIDER);
-        System.out.printf(" Room Charge Total    : RM %10.2f (%d Night(s) @ RM %.2f/night)%n", roomCharge,
-                booking.getNights(), booking.getPricePerNight());
+        System.out.printf(" Room Charge Total    : RM %10.2f (%d Room(s), %d Night(s) @ RM %.2f/night)%n", roomCharge,
+                booking.getNumOfRooms(), booking.getNights(), booking.getPricePerNight());
 
         if (depositAlreadyPaid) {
             System.out.printf(" 30%% Booking Deposit   : RM %10.2f  (ALREADY PAID AT RESERVATION)%n", bookingDeposit);
@@ -620,7 +709,7 @@ public class FrontDeskServiceUI {
         System.out.println(DIVIDER);
 
         double cashTendered = InputUtil.readDoubleMin(scanner,
-                String.format("Enter Cash Amount Received for Check-In Deposit (Min RM %.2f): ", totalRequiredDeposit),
+                String.format("Enter Deposit Amount Received for Check-In (Min RM %.2f): ", totalRequiredDeposit),
                 totalRequiredDeposit);
         double change = cashTendered - totalRequiredDeposit;
         boolean success = control.processCheckIn(booking.getConfirmationNo(), cashTendered);
@@ -701,6 +790,7 @@ public class FrontDeskServiceUI {
         System.out.printf("  - Confirmed Bookings : %d%n", control.getBookingCountByStatus(Booking.STATUS_CONFIRMED));
         System.out.printf("  - Reserved (Future)  : %d%n", control.getBookingCountByStatus(Booking.STATUS_RESERVED));
         System.out.printf("  - Pending (Queue)    : %d%n", control.getBookingCountByStatus(Booking.STATUS_PENDING));
+        System.out.printf("  - No-Show Bookings   : %d%n", control.getBookingCountByStatus(Booking.STATUS_NO_SHOW));
         System.out.printf("  - Paid (Cash)        : %d%n", control.getPaidBookingCount());
         System.out.println(DIVIDER);
     }

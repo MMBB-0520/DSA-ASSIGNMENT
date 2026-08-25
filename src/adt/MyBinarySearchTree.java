@@ -1,5 +1,8 @@
 package adt;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 /**
  * Custom Non-Linear Binary Search Tree (BST) ADT Implementation.
  * Uses internal Node structure (data, left, right) for standard O(log n) tree
@@ -225,11 +228,11 @@ public class MyBinarySearchTree<T extends Comparable<T>> implements BSTInterface
     }
 
     @Override
-    public java.util.Iterator<T> getIterator() {
+    public Iterator<T> getIterator() {
         return new InOrderIterator();
     }
 
-    private class InOrderIterator implements java.util.Iterator<T> {
+    private class InOrderIterator implements Iterator<T> {
         private Object[] elements;
         private int currentIndex;
 
@@ -247,7 +250,7 @@ public class MyBinarySearchTree<T extends Comparable<T>> implements BSTInterface
         @SuppressWarnings("unchecked")
         public T next() {
             if (!hasNext()) {
-                throw new java.util.NoSuchElementException("No more elements in Binary Search Tree iterator.");
+                throw new NoSuchElementException("No more elements in Binary Search Tree iterator.");
             }
             return (T) elements[currentIndex++];
         }

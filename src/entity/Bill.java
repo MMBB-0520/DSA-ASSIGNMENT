@@ -15,6 +15,7 @@ public class Bill {
     private String invoiceNo;
     private double pricePerNight;
     private int nights;
+    private int numOfRooms = 1;
     private String paymentStatus;
     private String paymentMethod;
     private double otherCharges;
@@ -23,17 +24,22 @@ public class Bill {
     private int requestedLateOption;
 
     public Bill() {
-        this("INV-00000000", 0.0, 1);
+        this("INV-00000000", 0.0, 1, 1);
     }
 
     public Bill(String invoiceNo) {
-        this(invoiceNo, 0.0, 1);
+        this(invoiceNo, 0.0, 1, 1);
     }
 
     public Bill(String invoiceNo, double pricePerNight, int nights) {
+        this(invoiceNo, pricePerNight, nights, 1);
+    }
+
+    public Bill(String invoiceNo, double pricePerNight, int nights, int numOfRooms) {
         this.invoiceNo = (invoiceNo != null) ? invoiceNo : "INV-00000000";
         this.pricePerNight = pricePerNight;
         this.nights = Math.max(nights, 1);
+        this.numOfRooms = Math.max(numOfRooms, 1);
         this.paymentMethod = METHOD_CASH;
         this.otherCharges = 80.00;
         this.cashTendered = 0.0;
@@ -66,6 +72,14 @@ public class Bill {
 
     public void setNights(int nights) {
         this.nights = Math.max(nights, 1);
+    }
+
+    public int getNumOfRooms() {
+        return Math.max(numOfRooms, 1);
+    }
+
+    public void setNumOfRooms(int numOfRooms) {
+        this.numOfRooms = Math.max(numOfRooms, 1);
     }
 
     public String getPaymentStatus() {
@@ -124,7 +138,7 @@ public class Bill {
 
     // Domain Calculations (Clean & Parameterless / Moment-of-Calculation)
     public double getRoomCharge() {
-        return pricePerNight * getNights();
+        return pricePerNight * getNights() * getNumOfRooms();
     }
 
     public double getServiceCharge() {
