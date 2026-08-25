@@ -318,68 +318,50 @@ public class FrontDeskServiceUI {
         System.out.printf("\n* Overall Price Range: RM %.2f - RM %.2f / night%n", overallPrice[0], overallPrice[1]);
         System.out.println(DIVIDER);
 
-        System.out.println("\nSelect Action:");
-        System.out.println(" 1. View & Filter Available Rooms (By Type / Max Price / Sort)");
-        System.out.println(" 2. Walk-In Registration");
-        System.out.println(" 3. Future Reservation");
-        System.out.println(" 0. Return to Menu");
-        int actionChoice = InputUtil.readIntInRange(scanner, "Enter Choice [0-3]: ", 0, 3);
+        System.out.println("\nSelect Room Type Filter:");
+        System.out.println(" 1. Standard");
+        System.out.println(" 2. Deluxe");
+        System.out.println(" 3. Suite");
+        System.out.println(" 0. All Room Types");
+        int typeChoiceOpt = InputUtil.readIntInRange(scanner, "Enter Choice [0-3]: ", 0, 3);
 
-        if (actionChoice == 1) {
-            System.out.println("\nSelect Room Type Filter:");
-            System.out.println(" 1. Standard");
-            System.out.println(" 2. Deluxe");
-            System.out.println(" 3. Suite");
-            System.out.println(" 0. All Room Types");
-            int typeChoiceOpt = InputUtil.readIntInRange(scanner, "Enter Choice [0-3]: ", 0, 3);
+        String roomType = switch (typeChoiceOpt) {
+            case 1 -> "Standard";
+            case 2 -> "Deluxe";
+            case 3 -> "Suite";
+            default -> "";
+        };
 
-            String roomType = switch (typeChoiceOpt) {
-                case 1 -> "Standard";
-                case 2 -> "Deluxe";
-                case 3 -> "Suite";
-                default -> "";
-            };
+        System.out.println("\nSelect Sorting Option:");
+        int sortOpt = InputUtil.readIntInRangeWithDefault(scanner,
+                "1. By Room Number | 2. By Price per Night: ", 1, 2, 1);
+        String sortBy = (sortOpt == 2) ? "Price" : "RoomNo";
 
-            System.out.println("\nSelect Sorting Option:");
-            int sortOpt = InputUtil.readIntInRangeWithDefault(scanner,
-                    "1. By Room Number | 2. By Price per Night: ", 1, 2, 1);
-            String sortBy = (sortOpt == 2) ? "Price" : "RoomNo";
+        Room[] results = control.searchAvailableRooms(roomType, sortBy);
 
-            Room[] results = control.searchAvailableRooms(roomType, sortBy);
+        System.out.println("\n" + SUB_DIVIDER);
+        System.out.printf(" AVAILABLE ROOMS RESULT (%d Match(es) Found)%n", results.length);
+        System.out.println(SUB_DIVIDER);
+        System.out.printf(" %-10s %-15s %-20s %-15s%n", "Room No", "Room Type", "Price/Night (RM)", "Status");
+        System.out.println(SUB_DIVIDER);
 
-            System.out.println("\n" + SUB_DIVIDER);
-            System.out.printf(" AVAILABLE ROOMS RESULT (%d Match(es) Found)%n", results.length);
-            System.out.println(SUB_DIVIDER);
-            System.out.printf(" %-10s %-15s %-20s %-15s%n", "Room No", "Room Type", "Price/Night (RM)", "Status");
-            System.out.println(SUB_DIVIDER);
-
-            if (results.length == 0) {
-                System.out.println(" [X] No available rooms matching the specified filter criteria.");
-            } else {
-                for (Room r : results) {
-                    System.out.printf(" %-10s %-15s RM %-17.2f %-15s%n", r.getRoomNo(), r.getRoomType(),
-                            r.getPricePerNight(), r.getStatus());
-                }
+        if (results.length == 0) {
+            System.out.println(" [X] No available rooms matching the specified filter criteria.");
+        } else {
+            for (Room r : results) {
+                System.out.printf(" %-10s %-15s RM %-17.2f %-15s%n", r.getRoomNo(), r.getRoomType(),
+                        r.getPricePerNight(), r.getStatus());
             }
-            System.out.println(SUB_DIVIDER);
+        }
+        System.out.println(SUB_DIVIDER);
 
-            boolean proceedWalkIn = InputUtil.readYesNo(scanner,
-                    "\nWould you like to proceed with Walk-In Registration for an available room now? (Y/N): ");
-            if (proceedWalkIn) {
-                System.out.println("\nRedirecting to Walk-In Registration Module...");
-                WalkInRegistrationUI walkInUI = new WalkInRegistrationUI();
-                walkInUI.displayMenu();
-                control.reloadData();
-            }
-
-        } else if (actionChoice == 2) {
+        boolean proceedWalkIn = InputUtil.readYesNo(scanner,
+                "\nWould you like to proceed with Walk-In Registration for an available room now? (Y/N): ");
+        if (proceedWalkIn) {
             System.out.println("\nRedirecting to Walk-In Registration Module...");
             WalkInRegistrationUI walkInUI = new WalkInRegistrationUI();
             walkInUI.displayMenu();
             control.reloadData();
-
-        } else if (actionChoice == 3) {
-            processFutureReservationUI();
         }
     }
 
@@ -756,7 +738,8 @@ public class FrontDeskServiceUI {
         System.out.printf("  Average Stay Duration: %.1f night(s)%n", control.getAverageStayNights());
         System.out.println(SUB_DIVIDER);
         System.out.println(" BST BOUNDS & BALANCE METRICS (rebalance() / getMin() / getMax()):");
-        System.out.printf("  - Tree Max Height    : %d level(s) [Divide-and-Conquer Rebalanced]%n", control.getTreeHeight());
+        System.out.printf("  - Tree Max Height    : %d level(s) [Divide-and-Conquer Rebalanced]%n",
+                control.getTreeHeight());
 
         Booking minBooking = control.getMinBooking();
         if (minBooking != null) {
