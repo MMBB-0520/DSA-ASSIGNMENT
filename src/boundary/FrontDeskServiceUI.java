@@ -755,7 +755,8 @@ public class FrontDeskServiceUI {
         System.out.printf("  Average Booking Value: RM %.2f%n", control.getAverageRevenuePerBooking());
         System.out.printf("  Average Stay Duration: %.1f night(s)%n", control.getAverageStayNights());
         System.out.println(SUB_DIVIDER);
-        System.out.println(" BST BOUNDS ANALYSIS (getMin() / getMax() Operations):");
+        System.out.println(" BST BOUNDS & BALANCE METRICS (rebalance() / getMin() / getMax()):");
+        System.out.printf("  - Tree Max Height    : %d level(s) [Divide-and-Conquer Rebalanced]%n", control.getTreeHeight());
 
         Booking minBooking = control.getMinBooking();
         if (minBooking != null) {

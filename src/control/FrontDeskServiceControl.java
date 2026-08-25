@@ -59,7 +59,14 @@ public class FrontDeskServiceControl {
         if (loaded != null && loaded.length > 0) {
             for (Booking b : loaded) {
                 if (b != null && b.getConfirmationNo() != null) {
+                    // Skip CANCELLED bookings (keeps in-memory BST search tree active-only, honors
+                    // delete())
+                    if (Booking.STATUS_CANCELLED.equalsIgnoreCase(b.getStatus())) {
+                        continue;
+                    }
+
                     // 1. Auto-mark NO-SHOW bookings
+                    // 
                     LocalDateTime noShowCutoff = (b.getCheckInDateTime() != null)
                             ? b.getCheckInDateTime().toLocalDate().atTime(23, 59)
                             : null;
@@ -165,6 +172,9 @@ public class FrontDeskServiceControl {
         if (bookingUpdated && loaded != null) {
             bookingDAO.saveAllBookings(loaded);
         }
+
+        // 4. Rebalance BST to achieve minimum balanced height
+        bookingTree.rebalance();
     }
 
     public void reloadData() {
@@ -224,6 +234,10 @@ public class FrontDeskServiceControl {
         return bookingTree.findMax();
     }
 
+    public int getTreeHeight() {
+        return bookingTree.getHeight();
+    }
+
     public Iterator<Booking> getBookingIterator() {
         return bookingTree.getIterator();
     }
@@ -239,7 +253,11 @@ public class FrontDeskServiceControl {
         Guest guest = (existingGuest != null) ? existingGuest
                 : new Guest(generateGuestId(), name, contactNumber, icPassport);
 
-        String confirmationNo = String.format("%08d", (int) (Math.random() * 90000000) + 10000000);
+        String confirmationNo;
+        do {
+            confirmationNo = String.format("%08d", (int) (Math.random() * 90000000) + 10000000);
+        } while (containsConfirmationNo(confirmationNo));
+
         Booking booking = new Booking(confirmationNo, guest, roomType, pricePerNight, numGuests, numOfRooms, checkIn,
                 checkOut,
                 LocalDateTime.now());
@@ -487,19 +505,35 @@ public class FrontDeskServiceControl {
             filtered[i] = (Room) rawArray[i];
         }
 
-        // Step 3: Sort by Room Number or Price per Night (Insertion Sort algorithm)
-        for (int i = 1; i < filtered.length; i++) {
-            Room key = filtered[i];
-            int j = i - 1;
+        // Step 3: Sort candidate rooms
+        if ("Price".equalsIgnoreCase(sortBy)) {
+            // Sort by Price per Night using Insertion Sort algorithm
+            for (int i = 1; i < filtered.length; i++) {
+                Room key = filtered[i];
+                int j = i - 1;
 
-            while (j >= 0 && compareRooms(filtered[j], key, sortBy) > 0) {
-                filtered[j + 1] = filtered[j];
-                j--;
+                while (j >= 0 && compareRooms(filtered[j], key, sortBy) > 0) {
+                    filtered[j + 1] = filtered[j];
+                    j--;
+                }
+                filtered[j + 1] = key;
             }
-            filtered[j + 1] = key;
+            return filtered;
+        } else {
+            // Sort by Room Number using BST ADT and inorder() traversal (Ascending Order)
+            BSTInterface<Room> tempRoomTree = new MyBinarySearchTree<>();
+            for (Room r : filtered) {
+                if (r != null) {
+                    tempRoomTree.insert(r);
+                }
+            }
+            Object[] inorderArray = tempRoomTree.inorder();
+            Room[] sortedByRoomNo = new Room[inorderArray.length];
+            for (int i = 0; i < inorderArray.length; i++) {
+                sortedByRoomNo[i] = (Room) inorderArray[i];
+            }
+            return sortedByRoomNo;
         }
-
-        return filtered;
     }
 
     private int compareRooms(Room r1, Room r2, String sortBy) {
@@ -896,7 +930,13 @@ public class FrontDeskServiceControl {
             }
         }
 
+        // 1. Save updated status to DAO JSON file (preserves financial/audit history)
         bookingDAO.saveBooking(booking);
+
+        // 2. Delete node from in-memory BST search index (keeps BST lean & fast,
+        // demonstrates delete() algorithm)
+        Booking dummyKey = new Booking(confirmationNo, null, null, 0, 0, null, null, null);
+        bookingTree.delete(dummyKey);
 
         if (isRefundable) {
             return String.format(

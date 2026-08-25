@@ -180,6 +180,40 @@ public class MyBinarySearchTree<T extends Comparable<T>> implements BSTInterface
     }
 
     @Override
+    public int getHeight() {
+        return getHeightHelper(root);
+    }
+
+    private int getHeightHelper(Node current) {
+        if (current == null) {
+            return 0;
+        }
+        return 1 + Math.max(getHeightHelper(current.left), getHeightHelper(current.right));
+    }
+
+    @Override
+    public void rebalance() {
+        if (isEmpty()) {
+            return;
+        }
+        Object[] sortedElements = inorder();
+        clear();
+        buildBalancedTreeHelper(sortedElements, 0, sortedElements.length - 1);
+    }
+
+    private void buildBalancedTreeHelper(Object[] elements, int start, int end) {
+        if (start > end) {
+            return;
+        }
+        int mid = start + (end - start) / 2;
+        @SuppressWarnings("unchecked")
+        T midData = (T) elements[mid];
+        insert(midData);
+        buildBalancedTreeHelper(elements, start, mid - 1);
+        buildBalancedTreeHelper(elements, mid + 1, end);
+    }
+
+    @Override
     public Object[] inorder() {
         Object[] result = new Object[size];
         int[] index = new int[1];

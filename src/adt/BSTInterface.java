@@ -83,6 +83,19 @@ public interface BSTInterface<T extends Comparable<T>> {
     T findMax();
 
     /**
+     * Calculates and returns the maximum height/depth of this binary search tree.
+     *
+     * @return The maximum height (number of levels), or 0 if tree is empty.
+     */
+    int getHeight();
+
+    /**
+     * Rebalances this binary search tree to achieve minimum balanced height using
+     * divide-and-conquer algorithm.
+     */
+    void rebalance();
+
+    /**
      * Performs an in-order traversal (Left -> Node -> Right) and returns elements
      * as an array.
      *

@@ -1,6 +1,6 @@
 package entity;
 
-public class Room {
+public class Room implements Comparable<Room> {
     public static final String STATUS_AVAILABLE = "AVAILABLE";
     public static final String STATUS_BOOKED = "BOOKED";
     public static final String STATUS_DIRTY = "DIRTY";
@@ -56,6 +56,15 @@ public class Room {
 
     public void setPricePerNight(double pricePerNight) {
         this.pricePerNight = pricePerNight;
+    }
+
+    @Override
+    public int compareTo(Room other) {
+        if (other == null || other.roomNo == null)
+            return 1;
+        if (this.roomNo == null)
+            return -1;
+        return this.roomNo.compareToIgnoreCase(other.roomNo);
     }
 
     @Override
