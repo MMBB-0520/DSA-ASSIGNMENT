@@ -6,7 +6,6 @@ import entity.Booking;
 import entity.Room;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 
 public class WalkInRegistrationUI {
@@ -65,10 +64,10 @@ public class WalkInRegistrationUI {
 
         String roomType = promptRoomType();
         int numGuests = promptInt("Number of Guests: ", 1, 10);
+        int nights = promptInt("Number of Nights: ", 1, 365);
 
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime checkIn = promptDateTime("Check-In Date/Time (yyyy-MM-dd HH:mm): ", now);
-        LocalDateTime checkOut = promptDateTime("Check-Out Date/Time (yyyy-MM-dd HH:mm): ", checkIn.plusHours(1));
+        LocalDateTime checkIn = LocalDateTime.now();
+        LocalDateTime checkOut = checkIn.plusDays(nights);
 
         if (!control.isRoomAvailable(roomType, checkIn, checkOut)) {
             System.out.println("[!] Warning: No " + roomType + " rooms are currently set to AVAILABLE.");
@@ -80,10 +79,12 @@ public class WalkInRegistrationUI {
             }
         }
 
-        Booking booking = control.registerBooking(guestName, contact, icPassport, roomType, numGuests, checkIn, checkOut);
+        Booking booking = control.registerWalkInBooking(guestName, contact, icPassport, roomType, numGuests, nights);
         System.out.println("\n[+] Guest added to queue successfully!");
         System.out.println("    Confirmation No : " + booking.getConfirmationNo());
         System.out.println("    Queue Position  : #" + control.getQueueSize());
+        System.out.println("    Check-In Time   : " + booking.getCheckInDateTime().format(FORMATTER));
+        System.out.println("    Check-Out Time  : " + booking.getCheckOutDateTime().format(FORMATTER));
         System.out.println("    Est. Nightly Rate: RM " + String.format("%.2f", booking.getPricePerNight()));
     }
 
@@ -94,6 +95,11 @@ public class WalkInRegistrationUI {
         }
 
         Booking next = control.getNextBooking();
+        if (next == null) {
+            System.out.println("[!] Queue is empty - no booking to process.");
+            return;
+        }
+
         System.out.printf("\nNext in queue: %s | Guest: %s | Room Type: %s\n",
                 next.getConfirmationNo(), next.getGuest().getGuestName(), next.getRoomType());
 
@@ -135,7 +141,7 @@ public class WalkInRegistrationUI {
 
     private void printConfirmationCard(Booking b, Room r) {
         System.out.println("\n========================================");
-        System.out.println("       REGISTRATION CONFIRMED           ");
+        System.out.println("     REGISTRATION CONFIRMED             ");
         System.out.println("========================================");
         System.out.println(" Confirmation No : " + b.getConfirmationNo());
         System.out.println(" Guest Name      : " + b.getGuest().getGuestName());
@@ -263,23 +269,6 @@ public class WalkInRegistrationUI {
                 System.out.printf("Please enter a value between %d and %d.\n", min, max);
             } catch (NumberFormatException e) {
                 System.out.println("Invalid integer.");
-            }
-        }
-    }
-
-    private LocalDateTime promptDateTime(String prompt, LocalDateTime requireAfter) {
-        while (true) {
-            System.out.print(prompt);
-            String input = scanner.nextLine().trim();
-            try {
-                LocalDateTime dt = LocalDateTime.parse(input, FORMATTER);
-                if (requireAfter != null && dt.isBefore(requireAfter)) {
-                    System.out.println("[!] Date/Time must be after " + requireAfter.format(FORMATTER));
-                    continue;
-                }
-                return dt;
-            } catch (DateTimeParseException e) {
-                System.out.println("Invalid format - use yyyy-MM-dd HH:mm, e.g. 2026-08-15 14:00.");
             }
         }
     }

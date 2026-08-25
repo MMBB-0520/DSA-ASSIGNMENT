@@ -3,28 +3,31 @@ package adt;
 import java.lang.reflect.Array;
 
 public class CustomQueue<T> implements QueueInterface<T> {
-    private ListInterface<T> list = new CustomLinkedList<>();
+    private ListInterface<T> list;
+
+    public CustomQueue() {
+        this.list = new CustomLinkedList<>();
+    }
 
     @Override
-    public void enqueue(T element) {
-        list.add(element);
+    public void enqueue(T newEntry) {
+        list.add(newEntry);
     }
 
     @Override
     public T dequeue() {
-        if (isEmpty()) return null;
-        return list.remove(0);
+        if (isEmpty()) {
+            return null;
+        }
+        return list.remove(1);
     }
 
     @Override
     public T peek() {
-        if (isEmpty()) return null;
-        return list.get(0);
-    }
-
-    @Override
-    public int size() {
-        return list.size();
+        if (isEmpty()) {
+            return null;
+        }
+        return list.get(1);
     }
 
     @Override
@@ -33,11 +36,16 @@ public class CustomQueue<T> implements QueueInterface<T> {
     }
 
     @Override
+    public int size() {
+        return list.size();
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public T[] toArray(T[] a) {
         T[] result = (T[]) Array.newInstance(a.getClass().getComponentType(), list.size());
         for (int i = 0; i < list.size(); i++) {
-            result[i] = list.get(i);
+            result[i] = list.get(i + 1);
         }
         return result;
     }

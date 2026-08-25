@@ -62,11 +62,42 @@ public class WalkInRegistrationControl {
         }
     }
 
+    /**
+     * Registers a walk-in customer. Automatically sets check-in to the current date/time (now)
+     * and computes check-out based on the number of nights.
+     */
+    public Booking registerWalkInBooking(String guestName, String contact, String icPassport,
+            String roomType, int numGuests, int numberOfNights) {
+
+        // Generate ID to correctly map to Guest(guestId, guestName, contactNumber, icPassport)
+        String guestId = "G" + (System.currentTimeMillis() % 100000);
+        Guest guest = new Guest(guestId, guestName, contact, icPassport);
+        guestDAO.saveGuest(guest);
+
+        String confirmNo = generateConfirmationNo();
+        double pricePerNight = getPriceForRoomType(roomType);
+
+        // Walk-in check-in is strictly right now
+        LocalDateTime checkIn = LocalDateTime.now();
+        LocalDateTime checkOut = checkIn.plusDays(numberOfNights);
+
+        Booking booking = new Booking(confirmNo, guest, roomType, numGuests, checkIn, checkOut);
+        booking.setPricePerNight(pricePerNight);
+        booking.setStatus("PENDING");
+
+        pendingQueue.enqueue(booking);
+        bookingDAO.saveBooking(booking);
+
+        return booking;
+    }
+
+    // Retained for backward compatibility or advance booking use cases if needed
     public Booking registerBooking(String guestName, String contact, String icPassport,
             String roomType, int numGuests,
             LocalDateTime checkIn, LocalDateTime checkOut) {
 
-        Guest guest = new Guest(guestName, contact, icPassport);
+        String guestId = "G" + (System.currentTimeMillis() % 100000);
+        Guest guest = new Guest(guestId, guestName, contact, icPassport);
         guestDAO.saveGuest(guest);
 
         String confirmNo = generateConfirmationNo();
