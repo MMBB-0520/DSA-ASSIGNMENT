@@ -3,7 +3,7 @@
     "roomNo": "101",
     "roomType": "Standard",
     "pricePerNight": 150.0,
-    "status": "AVAILABLE"
+    "status": "BOOKED"
   },
   {
     "roomNo": "102",

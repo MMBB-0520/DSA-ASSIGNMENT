@@ -52,5 +52,17 @@
     "guestName": "test",
     "contactNumber": "098765432",
     "icPassport": "050821070475"
+  },
+  {
+    "guestId": "G1010",
+    "guestName": "john doe",
+    "contactNumber": "0123456789",
+    "icPassport": "980101145555"
+  },
+  {
+    "guestId": "G1011",
+    "guestName": "alex",
+    "contactNumber": "0182030235",
+    "icPassport": "123456789012"
   }
 ]

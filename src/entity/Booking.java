@@ -30,6 +30,7 @@ public class Booking implements Comparable<Booking> {
     // Billing composition
     private Bill bill;
 
+    // 8-parameter constructor
     public Booking(String confirmationNo, Guest guest, String roomType, double pricePerNight, int numGuests,
             LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime, LocalDateTime registeredAt) {
         this.confirmationNo = confirmationNo;
@@ -43,6 +44,21 @@ public class Booking implements Comparable<Booking> {
         this.status = STATUS_PENDING;
         this.bill = new Bill("INV-" + (confirmationNo != null ? confirmationNo : "00000000"), pricePerNight,
                 getNights());
+    }
+
+    // 6-parameter constructor (Added to match WalkInRegistrationControl calls)
+    public Booking(String confirmationNo, Guest guest, String roomType, int numGuests,
+            LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime) {
+        this.confirmationNo = confirmationNo;
+        this.guest = guest;
+        this.roomType = roomType;
+        this.numGuests = numGuests;
+        this.checkInDateTime = checkInDateTime;
+        this.checkOutDateTime = checkOutDateTime;
+        this.registeredAt = LocalDateTime.now();
+        this.pricePerNight = 150.0; // Default fallback price
+        this.status = STATUS_PENDING;
+        this.bill = new Bill("INV-" + (confirmationNo != null ? confirmationNo : "00000000"), this.pricePerNight, getNights());
     }
 
     public Bill getBill() {

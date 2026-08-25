@@ -290,14 +290,14 @@ public class FrontDeskServiceUI {
             if (proceedWalkIn) {
                 System.out.println("\nRedirecting to Walk-In Registration Module...");
                 WalkInRegistrationUI walkInUI = new WalkInRegistrationUI();
-                walkInUI.registerBooking();
+                walkInUI.displayMenu(); // Changed from runMenu()
                 control.reloadData();
             }
 
         } else if (actionChoice == 2) {
             System.out.println("\nRedirecting to Walk-In Registration Module...");
             WalkInRegistrationUI walkInUI = new WalkInRegistrationUI();
-            walkInUI.registerBooking();
+            walkInUI.displayMenu(); // Changed from registerBooking()
             control.reloadData();
 
         } else if (actionChoice == 3) {

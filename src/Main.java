@@ -37,7 +37,7 @@ public class Main {
             switch (choice) {
                 case 1 -> {
                     WalkInRegistrationUI walkInUI = new WalkInRegistrationUI();
-                    walkInUI.runMenu();
+                    walkInUI.displayMenu();
                 }
                 case 2 -> {
                     HousekeepingUI housekeepingUI = new HousekeepingUI();

@@ -1,31 +1,5 @@
 [
   {
-    "confirmationNo": "84920186",
-    "guest": {
-      "guestId": "G1006",
-      "guestName": "alex",
-      "contactNumber": "0182030235",
-      "icPassport": "050821070475"
-    },
-    "roomType": "Standard",
-    "pricePerNight": 150.0,
-    "numGuests": 1,
-    "checkInDateTime": "2026-08-23T23:56:00",
-    "checkOutDateTime": "2026-08-24T12:00:00",
-    "registeredAt": "2026-08-23T23:57:01.0363522",
-    "status": "PENDING",
-    "bill": {
-      "invoiceNo": "INV-84920186",
-      "pricePerNight": 150.0,
-      "nights": 1,
-      "paymentMethod": "CASH",
-      "otherCharges": 80.0,
-      "cashTendered": 0.0,
-      "changeDue": 0.0,
-      "requestedLateOption": 0
-    }
-  },
-  {
     "confirmationNo": "84920187",
     "guest": {
       "guestId": "G1007",
@@ -104,6 +78,58 @@
     }
   },
   {
+    "confirmationNo": "84920190",
+    "guest": {
+      "guestId": "G1010",
+      "guestName": "john doe",
+      "contactNumber": "0123456789",
+      "icPassport": "980101145555"
+    },
+    "roomType": "Standard",
+    "pricePerNight": 150.0,
+    "numGuests": 2,
+    "checkInDateTime": "2026-08-25T21:42:22.7430811",
+    "checkOutDateTime": "2026-08-26T14:00:00",
+    "registeredAt": "2026-08-25T21:42:27.3071659",
+    "status": "PENDING",
+    "bill": {
+      "invoiceNo": "INV-84920190",
+      "pricePerNight": 150.0,
+      "nights": 1,
+      "paymentMethod": "CASH",
+      "otherCharges": 80.0,
+      "cashTendered": 0.0,
+      "changeDue": 0.0,
+      "requestedLateOption": 0
+    }
+  },
+  {
+    "confirmationNo": "84920191",
+    "guest": {
+      "guestId": "G1011",
+      "guestName": "alex",
+      "contactNumber": "0182030235",
+      "icPassport": "123456789012"
+    },
+    "roomType": "Deluxe",
+    "pricePerNight": 250.0,
+    "numGuests": 1,
+    "checkInDateTime": "2026-08-25T21:57:10.5094064",
+    "checkOutDateTime": "2026-08-26T12:00:00",
+    "registeredAt": "2026-08-25T21:57:36.5944129",
+    "status": "PENDING",
+    "bill": {
+      "invoiceNo": "INV-84920191",
+      "pricePerNight": 250.0,
+      "nights": 1,
+      "paymentMethod": "CASH",
+      "otherCharges": 80.0,
+      "cashTendered": 0.0,
+      "changeDue": 0.0,
+      "requestedLateOption": 0
+    }
+  },
+  {
     "confirmationNo": "84920185",
     "guest": {
       "guestId": "G1005",
@@ -153,5 +179,32 @@
     "checkOutDateTime": "2026-08-13T08:37:51.3336306",
     "registeredAt": "2026-08-10T08:37:51.3336306",
     "status": "COMPLETED"
+  },
+  {
+    "confirmationNo": "84920186",
+    "guest": {
+      "guestId": "G1006",
+      "guestName": "alex",
+      "contactNumber": "0182030235",
+      "icPassport": "050821070475"
+    },
+    "roomType": "Standard",
+    "roomNo": "101",
+    "pricePerNight": 150.0,
+    "numGuests": 1,
+    "checkInDateTime": "2026-08-23T23:56:00",
+    "checkOutDateTime": "2026-08-24T12:00:00",
+    "registeredAt": "2026-08-23T23:57:01.0363522",
+    "status": "CONFIRMED",
+    "bill": {
+      "invoiceNo": "INV-84920186",
+      "pricePerNight": 150.0,
+      "nights": 1,
+      "paymentMethod": "CASH",
+      "otherCharges": 80.0,
+      "cashTendered": 0.0,
+      "changeDue": 0.0,
+      "requestedLateOption": 0
+    }
   }
 ]
