@@ -1,208 +1,116 @@
 [
   {
-    "confirmationNo": "84920187",
-    "guest": {
-      "guestId": "G1007",
-      "guestName": "test",
-      "contactNumber": "109387614",
-      "icPassport": "123456789012"
-    },
-    "roomType": "Standard",
-    "pricePerNight": 150.0,
-    "numGuests": 1,
-    "checkInDateTime": "2026-08-24T14:00:00",
-    "checkOutDateTime": "2026-08-28T14:00:00",
-    "registeredAt": "2026-08-24T00:27:40.4610553",
-    "status": "PENDING",
-    "bill": {
-      "invoiceNo": "INV-84920187",
-      "pricePerNight": 150.0,
-      "nights": 4,
-      "paymentMethod": "CASH",
-      "otherCharges": 80.0,
-      "cashTendered": 0.0,
-      "changeDue": 0.0,
-      "requestedLateOption": 0
-    }
-  },
-  {
-    "confirmationNo": "84920188",
-    "guest": {
-      "guestId": "G1008",
-      "guestName": "test",
-      "contactNumber": "0182030235",
-      "icPassport": "123456789012"
-    },
-    "roomType": "Standard",
-    "pricePerNight": 150.0,
-    "numGuests": 1,
-    "checkInDateTime": "2026-08-24T00:54:16.2122032",
-    "checkOutDateTime": "2026-08-28T14:00:00",
-    "registeredAt": "2026-08-24T00:54:40.1790206",
-    "status": "PENDING",
-    "bill": {
-      "invoiceNo": "INV-84920188",
-      "pricePerNight": 150.0,
-      "nights": 4,
-      "paymentMethod": "CASH",
-      "otherCharges": 80.0,
-      "cashTendered": 0.0,
-      "changeDue": 0.0,
-      "requestedLateOption": 0
-    }
-  },
-  {
-    "confirmationNo": "84920189",
-    "guest": {
-      "guestId": "G1009",
-      "guestName": "test",
-      "contactNumber": "098765432",
-      "icPassport": "050821070475"
-    },
-    "roomType": "Standard",
-    "pricePerNight": 150.0,
-    "numGuests": 1,
-    "checkInDateTime": "2026-08-24T01:09:35.5534276",
-    "checkOutDateTime": "2026-08-25T14:00:00",
-    "registeredAt": "2026-08-24T01:10:11.1709679",
-    "status": "PENDING",
-    "bill": {
-      "invoiceNo": "INV-84920189",
-      "pricePerNight": 150.0,
-      "nights": 1,
-      "paymentMethod": "CASH",
-      "otherCharges": 80.0,
-      "cashTendered": 0.0,
-      "changeDue": 0.0,
-      "requestedLateOption": 0
-    }
-  },
-  {
-    "confirmationNo": "84920190",
-    "guest": {
-      "guestId": "G1010",
-      "guestName": "john doe",
-      "contactNumber": "0123456789",
-      "icPassport": "980101145555"
-    },
-    "roomType": "Standard",
-    "pricePerNight": 150.0,
-    "numGuests": 2,
-    "checkInDateTime": "2026-08-25T21:42:22.7430811",
-    "checkOutDateTime": "2026-08-26T14:00:00",
-    "registeredAt": "2026-08-25T21:42:27.3071659",
-    "status": "PENDING",
-    "bill": {
-      "invoiceNo": "INV-84920190",
-      "pricePerNight": 150.0,
-      "nights": 1,
-      "paymentMethod": "CASH",
-      "otherCharges": 80.0,
-      "cashTendered": 0.0,
-      "changeDue": 0.0,
-      "requestedLateOption": 0
-    }
-  },
-  {
-    "confirmationNo": "84920191",
-    "guest": {
-      "guestId": "G1011",
-      "guestName": "alex",
-      "contactNumber": "0182030235",
-      "icPassport": "123456789012"
-    },
-    "roomType": "Deluxe",
-    "pricePerNight": 250.0,
-    "numGuests": 1,
-    "checkInDateTime": "2026-08-25T21:57:10.5094064",
-    "checkOutDateTime": "2026-08-26T12:00:00",
-    "registeredAt": "2026-08-25T21:57:36.5944129",
-    "status": "PENDING",
-    "bill": {
-      "invoiceNo": "INV-84920191",
-      "pricePerNight": 250.0,
-      "nights": 1,
-      "paymentMethod": "CASH",
-      "otherCharges": 80.0,
-      "cashTendered": 0.0,
-      "changeDue": 0.0,
-      "requestedLateOption": 0
-    }
-  },
-  {
-    "confirmationNo": "84920185",
-    "guest": {
-      "guestId": "G1005",
-      "guestName": "Sabrina",
-      "contactNumber": "0147435699",
-      "icPassport": "031230145278"
-    },
-    "roomType": "Deluxe",
-    "roomNo": "201",
-    "pricePerNight": 250.0,
-    "numGuests": 2,
-    "checkInDateTime": "2026-08-14T23:40:00",
-    "checkOutDateTime": "2026-08-19T13:00:00",
-    "registeredAt": "2026-08-14T23:35:56.7439802",
-    "status": "CANCELLED"
-  },
-  {
-    "confirmationNo": "84920183",
+    "confirmationNo": "25083625",
     "guest": {
       "guestId": "G1001",
       "guestName": "Alice Johnson",
       "contactNumber": "0123456789",
-      "icPassport": "950101-14-5566"
+      "icPassport": "950101145566"
     },
     "roomType": "Deluxe",
-    "roomNo": "201",
     "pricePerNight": 250.0,
-    "numGuests": 2,
-    "checkInDateTime": "2026-08-12T06:37:51.3336306",
-    "checkOutDateTime": "2026-08-14T08:37:51.3336306",
-    "registeredAt": "2026-08-12T05:37:51.3336306",
-    "status": "COMPLETED"
-  },
-  {
-    "confirmationNo": "59302148",
-    "guest": {
-      "guestId": "G1003",
-      "guestName": "Charlie Tan",
-      "contactNumber": "0112233445",
-      "icPassport": "900812-10-1234"
-    },
-    "roomType": "Standard",
-    "roomNo": "105",
-    "pricePerNight": 150.0,
     "numGuests": 1,
-    "checkInDateTime": "2026-08-11T08:37:51.3336306",
-    "checkOutDateTime": "2026-08-13T08:37:51.3336306",
-    "registeredAt": "2026-08-10T08:37:51.3336306",
-    "status": "COMPLETED"
-  },
-  {
-    "confirmationNo": "84920186",
-    "guest": {
-      "guestId": "G1006",
-      "guestName": "alex",
-      "contactNumber": "0182030235",
-      "icPassport": "050821070475"
-    },
-    "roomType": "Standard",
-    "roomNo": "101",
-    "pricePerNight": 150.0,
-    "numGuests": 1,
-    "checkInDateTime": "2026-08-23T23:56:00",
-    "checkOutDateTime": "2026-08-24T12:00:00",
-    "registeredAt": "2026-08-23T23:57:01.0363522",
-    "status": "CONFIRMED",
+    "numOfRooms": 2,
+    "checkInDateTime": "2026-09-02T13:00:00",
+    "checkOutDateTime": "2026-09-04T12:00:00",
+    "registeredAt": "2026-08-25T22:01:08.3342121",
+    "status": "CANCELLED",
     "bill": {
-      "invoiceNo": "INV-84920186",
-      "pricePerNight": 150.0,
-      "nights": 1,
+      "invoiceNo": "INV-25083625",
+      "pricePerNight": 250.0,
+      "nights": 2,
+      "numOfRooms": 2,
+      "paymentStatus": "REFUNDED",
       "paymentMethod": "CASH",
       "otherCharges": 80.0,
-      "cashTendered": 0.0,
+      "cashTendered": 300.0,
+      "changeDue": 300.0,
+      "requestedLateOption": 0
+    }
+  },
+  {
+    "confirmationNo": "89177744",
+    "guest": {
+      "guestId": "G1001",
+      "guestName": "Alice Johnson",
+      "contactNumber": "0123456789",
+      "icPassport": "950101145566"
+    },
+    "roomType": "Suite",
+    "pricePerNight": 400.0,
+    "numGuests": 1,
+    "numOfRooms": 1,
+    "checkInDateTime": "2026-09-09T13:00:00",
+    "checkOutDateTime": "2026-09-10T12:00:00",
+    "registeredAt": "2026-08-25T22:07:44.6218788",
+    "status": "RESERVED",
+    "bill": {
+      "invoiceNo": "INV-89177744",
+      "pricePerNight": 400.0,
+      "nights": 1,
+      "numOfRooms": 1,
+      "paymentStatus": "DEPOSIT PAID",
+      "paymentMethod": "CASH",
+      "otherCharges": 80.0,
+      "cashTendered": 120.0,
+      "changeDue": 0.0,
+      "requestedLateOption": 0
+    }
+  },
+  {
+    "confirmationNo": "90689756",
+    "guest": {
+      "guestId": "G0016",
+      "guestName": "Far Guest",
+      "contactNumber": "0123334444",
+      "icPassport": "A998877"
+    },
+    "roomType": "Standard",
+    "pricePerNight": 150.0,
+    "numGuests": 1,
+    "numOfRooms": 1,
+    "checkInDateTime": "2026-08-27T22:40:14.6319469",
+    "checkOutDateTime": "2026-08-28T22:40:14.6319469",
+    "registeredAt": "2026-08-25T22:40:14.6393003",
+    "status": "CANCELLED",
+    "bill": {
+      "invoiceNo": "INV-90689756",
+      "pricePerNight": 150.0,
+      "nights": 1,
+      "numOfRooms": 1,
+      "paymentStatus": "REFUNDED",
+      "paymentMethod": "CASH",
+      "otherCharges": 80.0,
+      "cashTendered": 45.0,
+      "changeDue": 45.0,
+      "requestedLateOption": 0
+    }
+  },
+  {
+    "confirmationNo": "89870004",
+    "guest": {
+      "guestId": "G0017",
+      "guestName": "Soon Guest",
+      "contactNumber": "0123335555",
+      "icPassport": "A998866"
+    },
+    "roomType": "Deluxe",
+    "pricePerNight": 250.0,
+    "numGuests": 1,
+    "numOfRooms": 1,
+    "checkInDateTime": "2026-08-26T08:40:14.6319469",
+    "checkOutDateTime": "2026-08-27T08:40:14.6319469",
+    "registeredAt": "2026-08-25T22:40:14.6504948",
+    "status": "CANCELLED",
+    "bill": {
+      "invoiceNo": "INV-89870004",
+      "pricePerNight": 250.0,
+      "nights": 1,
+      "numOfRooms": 1,
+      "paymentStatus": "FORFEITED",
+      "paymentMethod": "CASH",
+      "otherCharges": 80.0,
+      "cashTendered": 75.0,
       "changeDue": 0.0,
       "requestedLateOption": 0
     }

@@ -10,6 +10,7 @@ public class Booking implements Comparable<Booking> {
     public static final String STATUS_CONFIRMED = "CONFIRMED";
     public static final String STATUS_CHECKED_IN = "CHECKED_IN";
     public static final String STATUS_CANCELLED = "CANCELLED";
+    public static final String STATUS_NO_SHOW = "NO_SHOW";
     public static final String STATUS_COMPLETED = "COMPLETED";
 
     public static final String PAYMENT_UNPAID = Bill.PAYMENT_UNPAID;
@@ -22,6 +23,7 @@ public class Booking implements Comparable<Booking> {
     private String roomNo;
     private double pricePerNight;
     private int numGuests;
+    private int numOfRooms = 1;
     private LocalDateTime checkInDateTime;
     private LocalDateTime checkOutDateTime;
     private LocalDateTime registeredAt;
@@ -33,17 +35,23 @@ public class Booking implements Comparable<Booking> {
     // 8-parameter constructor
     public Booking(String confirmationNo, Guest guest, String roomType, double pricePerNight, int numGuests,
             LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime, LocalDateTime registeredAt) {
+        this(confirmationNo, guest, roomType, pricePerNight, numGuests, 1, checkInDateTime, checkOutDateTime, registeredAt);
+    }
+
+    public Booking(String confirmationNo, Guest guest, String roomType, double pricePerNight, int numGuests,
+            int numOfRooms, LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime, LocalDateTime registeredAt) {
         this.confirmationNo = confirmationNo;
         this.guest = guest;
         this.roomType = roomType;
         this.pricePerNight = pricePerNight;
         this.numGuests = numGuests;
+        this.numOfRooms = Math.max(numOfRooms, 1);
         this.checkInDateTime = checkInDateTime;
         this.checkOutDateTime = checkOutDateTime;
         this.registeredAt = registeredAt;
         this.status = STATUS_PENDING;
         this.bill = new Bill("INV-" + (confirmationNo != null ? confirmationNo : "00000000"), pricePerNight,
-                getNights());
+                getNights(), getNumOfRooms());
     }
 
     // 6-parameter constructor (Added to match WalkInRegistrationControl calls)
@@ -64,10 +72,11 @@ public class Booking implements Comparable<Booking> {
     public Bill getBill() {
         if (bill == null) {
             bill = new Bill("INV-" + (confirmationNo != null ? confirmationNo : "00000000"), pricePerNight,
-                    getNights());
+                    getNights(), getNumOfRooms());
         } else {
             bill.setPricePerNight(pricePerNight);
             bill.setNights(getNights());
+            bill.setNumOfRooms(getNumOfRooms());
         }
         return bill;
     }
@@ -126,6 +135,17 @@ public class Booking implements Comparable<Booking> {
 
     public void setNumGuests(int numGuests) {
         this.numGuests = numGuests;
+    }
+
+    public int getNumOfRooms() {
+        return numOfRooms <= 0 ? 1 : numOfRooms;
+    }
+
+    public void setNumOfRooms(int numOfRooms) {
+        this.numOfRooms = Math.max(numOfRooms, 1);
+        if (bill != null) {
+            bill.setNumOfRooms(this.numOfRooms);
+        }
     }
 
     public LocalDateTime getCheckin() {
@@ -193,14 +213,14 @@ public class Booking implements Comparable<Booking> {
 
         long minutesOver = ChronoUnit.MINUTES.between(this.checkOutDateTime, now);
 
-        if (minutesOver <= 30) {
-            return 0; // <= 30 mins: Grace Period (Free)
-        } else if (minutesOver <= 120) {
-            return 1; // 30 mins - 2 hours: +25%
-        } else if (minutesOver <= 240) {
-            return 2; // 2 - 4 hours: +50%
+        if (minutesOver <= 0) {
+            return 0; // On time / Grace Period (Free)
+        } else if (minutesOver <= 30) {
+            return 1; // <= 30 mins (until 12:30): +25%
+        } else if (minutesOver <= 60) {
+            return 2; // > 30 mins to 1 hr (until 13:00): +50%
         } else {
-            return 3; // > 4 hours: +100% (Extra 1 night fee charged as Late Charge)
+            return 3; // > 1 hr to 2 hrs (until 14:00): +100%
         }
     }
 
@@ -249,8 +269,8 @@ public class Booking implements Comparable<Booking> {
         String guestName = (guest != null) ? guest.getGuestName() : "None";
         String roomInfo = (roomNo != null && !roomNo.isEmpty()) ? roomNo : (roomType != null ? roomType : "Unassigned");
         return String.format(
-                "Booking[%s] Guest=%s Room=%s Guests=%d CheckIn=%s CheckOut=%s Nights=%d Total=RM%.2f Status=%s Payment=%s",
-                confirmationNo, guestName, roomInfo, numGuests, checkInDateTime, checkOutDateTime,
+                "Booking[%s] Guest=%s Room=%s Rooms=%d Guests=%d CheckIn=%s CheckOut=%s Nights=%d Total=RM%.2f Status=%s Payment=%s",
+                confirmationNo, guestName, roomInfo, getNumOfRooms(), numGuests, checkInDateTime, checkOutDateTime,
                 getNights(), getBill().getGrandTotal(), status, getBill().getPaymentStatus());
     }
 }

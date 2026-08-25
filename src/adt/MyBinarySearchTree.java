@@ -1,5 +1,8 @@
 package adt;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 /**
  * Custom Non-Linear Binary Search Tree (BST) ADT Implementation.
  * Uses internal Node structure (data, left, right) for standard O(log n) tree
@@ -31,22 +34,6 @@ public class MyBinarySearchTree<T extends Comparable<T>> implements BSTInterface
     public MyBinarySearchTree() {
         this.root = null;
         this.size = 0;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return root == null;
-    }
-
-    @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
-    public void clear() {
-        root = null;
-        size = 0;
     }
 
     @Override
@@ -150,6 +137,22 @@ public class MyBinarySearchTree<T extends Comparable<T>> implements BSTInterface
     }
 
     @Override
+    public boolean isEmpty() {
+        return root == null;
+    }
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public void clear() {
+        root = null;
+        size = 0;
+    }
+
+    @Override
     public T findMin() {
         if (isEmpty()) {
             return null;
@@ -174,6 +177,40 @@ public class MyBinarySearchTree<T extends Comparable<T>> implements BSTInterface
             current = current.right;
         }
         return current.data;
+    }
+
+    @Override
+    public int getHeight() {
+        return getHeightHelper(root);
+    }
+
+    private int getHeightHelper(Node current) {
+        if (current == null) {
+            return 0;
+        }
+        return 1 + Math.max(getHeightHelper(current.left), getHeightHelper(current.right));
+    }
+
+    @Override
+    public void rebalance() {
+        if (isEmpty()) {
+            return;
+        }
+        Object[] sortedElements = inorder();
+        clear();
+        buildBalancedTreeHelper(sortedElements, 0, sortedElements.length - 1);
+    }
+
+    private void buildBalancedTreeHelper(Object[] elements, int start, int end) {
+        if (start > end) {
+            return;
+        }
+        int mid = start + (end - start) / 2;
+        @SuppressWarnings("unchecked")
+        T midData = (T) elements[mid];
+        insert(midData);
+        buildBalancedTreeHelper(elements, start, mid - 1);
+        buildBalancedTreeHelper(elements, mid + 1, end);
     }
 
     @Override
@@ -225,11 +262,11 @@ public class MyBinarySearchTree<T extends Comparable<T>> implements BSTInterface
     }
 
     @Override
-    public java.util.Iterator<T> getIterator() {
+    public Iterator<T> getIterator() {
         return new InOrderIterator();
     }
 
-    private class InOrderIterator implements java.util.Iterator<T> {
+    private class InOrderIterator implements Iterator<T> {
         private Object[] elements;
         private int currentIndex;
 
@@ -247,7 +284,7 @@ public class MyBinarySearchTree<T extends Comparable<T>> implements BSTInterface
         @SuppressWarnings("unchecked")
         public T next() {
             if (!hasNext()) {
-                throw new java.util.NoSuchElementException("No more elements in Binary Search Tree iterator.");
+                throw new NoSuchElementException("No more elements in Binary Search Tree iterator.");
             }
             return (T) elements[currentIndex++];
         }
