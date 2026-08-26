@@ -8,8 +8,7 @@
             "type": "java",
             "name": "Main",
             "request": "launch",
-            "mainClass": "Main",
-            "projectName": "alextest_3329a239"
+            "mainClass": "Main"
         },
         {
             "type": "java",

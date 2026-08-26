@@ -1,6 +1,7 @@
 import boundary.FrontDeskServiceUI;
 import boundary.HousekeepingUI;
 import boundary.WalkInRegistrationUI;
+import util.InputUtil;
 import java.util.Scanner;
 
 public class Main {
@@ -23,16 +24,9 @@ public class Main {
             System.out.println("╚═════════════════════════════════════════╝");
             System.out.println("1. Walk-In Registration");
             System.out.println("2. Housekeeping Task Log");
-            System.out.println("3. Front Desk Search");
+            System.out.println("3. Front Desk Service");
             System.out.println("0. Exit\n");
-            System.out.print("Enter Choice: ");
-
-            try {
-                String input = sc.nextLine().trim();
-                choice = Integer.parseInt(input);
-            } catch (NumberFormatException e) {
-                choice = -1;
-            }
+            choice = InputUtil.readIntInRange(sc, "Enter Choice [0-3]: ", 0, 3);
 
             switch (choice) {
                 case 1 -> {
@@ -48,7 +42,7 @@ public class Main {
                     searchUI.runMenu();
                 }
                 case 0 -> System.out.println("\nThank you for using Hotel Management System. Goodbye!");
-                default -> System.out.println("\nInvalid choice! Please enter a number between 1 and 4.");
+                default -> System.out.println("\nInvalid choice! Please enter a valid menu option.");
             }
         } while (choice != 0);
 

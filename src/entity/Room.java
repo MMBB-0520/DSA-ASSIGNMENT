@@ -1,14 +1,14 @@
 package entity;
 
-public class Room {
+public class Room implements Comparable<Room> {
     public static final String STATUS_AVAILABLE = "AVAILABLE";
     public static final String STATUS_BOOKED = "BOOKED";
     public static final String STATUS_DIRTY = "DIRTY";
     public static final String STATUS_CLEANING = "CLEANING";
     public static final String STATUS_INSPECTED = "INSPECTED";
-    public static final String STATUS_LATE_30MINS = "LATE (30 MINS)";
-    public static final String STATUS_LATE_2HRS = "LATE (2HRS)";
-    public static final String STATUS_LATE_4HRS = "LATE (4HRS)";
+    public static final String STATUS_LATE_30MIN = "LATE CHECKOUT (12:30)";
+    public static final String STATUS_LATE_1HRS = "LATE CHECKOUT (13:00)";
+    public static final String STATUS_LATE_2HRS = "LATE CHECKOUT (14:00)";
 
     private String roomNo;
     private String roomType;
@@ -56,6 +56,15 @@ public class Room {
 
     public void setPricePerNight(double pricePerNight) {
         this.pricePerNight = pricePerNight;
+    }
+
+    @Override
+    public int compareTo(Room other) {
+        if (other == null || other.roomNo == null)
+            return 1;
+        if (this.roomNo == null)
+            return -1;
+        return this.roomNo.compareToIgnoreCase(other.roomNo);
     }
 
     @Override
