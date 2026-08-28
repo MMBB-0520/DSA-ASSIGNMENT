@@ -39,6 +39,10 @@ public class Booking implements Comparable<Booking> {
     // Billing composition
     private Bill bill;
 
+    // Default constructor required for JSON deserialization (Gson)
+    public Booking() {
+    }
+
     // 8-parameter constructor
     public Booking(String confirmationNo, Guest guest, String roomType, double pricePerNight, int numGuests,
             LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime, LocalDateTime registeredAt) {
