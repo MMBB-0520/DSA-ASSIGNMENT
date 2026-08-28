@@ -3,13 +3,13 @@
     "roomNo": "101",
     "roomType": "Standard",
     "pricePerNight": 150.0,
-    "status": "INSPECTED"
+    "status": "AVAILABLE"
   },
   {
     "roomNo": "102",
     "roomType": "Standard",
     "pricePerNight": 150.0,
-    "status": "Cleaned"
+    "status": "AVAILABLE"
   },
   {
     "roomNo": "103",
@@ -27,7 +27,7 @@
     "roomNo": "105",
     "roomType": "Standard",
     "pricePerNight": 150.0,
-    "status": "Cleaned"
+    "status": "AVAILABLE"
   },
   {
     "roomNo": "106",
@@ -69,13 +69,13 @@
     "roomNo": "202",
     "roomType": "Deluxe",
     "pricePerNight": 250.0,
-    "status": "BOOKED"
+    "status": "AVAILABLE"
   },
   {
     "roomNo": "203",
     "roomType": "Deluxe",
     "pricePerNight": 280.0,
-    "status": "Cleaning In Progress"
+    "status": "AVAILABLE"
   },
   {
     "roomNo": "204",
@@ -123,49 +123,49 @@
     "roomNo": "301",
     "roomType": "Suite",
     "pricePerNight": 400.0,
-    "status": "Cleaning In Progress"
+    "status": "AVAILABLE"
   },
   {
     "roomNo": "302",
     "roomType": "Suite",
     "pricePerNight": 400.0,
-    "status": "DIRTY"
+    "status": "AVAILABLE"
   },
   {
     "roomNo": "303",
     "roomType": "Suite",
     "pricePerNight": 450.0,
-    "status": "Dirty"
+    "status": "AVAILABLE"
   },
   {
     "roomNo": "304",
     "roomType": "Suite",
     "pricePerNight": 450.0,
-    "status": "BOOKED"
+    "status": "AVAILABLE"
   },
   {
     "roomNo": "305",
     "roomType": "Suite",
     "pricePerNight": 500.0,
-    "status": "BOOKED"
+    "status": "AVAILABLE"
   },
   {
     "roomNo": "306",
     "roomType": "Suite",
     "pricePerNight": 500.0,
-    "status": "BOOKED"
+    "status": "AVAILABLE"
   },
   {
     "roomNo": "307",
     "roomType": "Suite",
     "pricePerNight": 400.0,
-    "status": "BOOKED"
+    "status": "AVAILABLE"
   },
   {
     "roomNo": "308",
     "roomType": "Suite",
     "pricePerNight": 450.0,
-    "status": "BOOKED"
+    "status": "AVAILABLE"
   },
   {
     "roomNo": "309",

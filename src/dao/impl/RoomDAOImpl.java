@@ -31,4 +31,17 @@ public class RoomDAOImpl implements RoomDAO {
         }
         return null;
     }
+
+    @Override
+    public void saveRoom(Room room) {
+        if (room == null || room.getRoomNo() == null) return;
+        Room[] rooms = getAllRooms();
+        for (int i = 0; i < rooms.length; i++) {
+            if (rooms[i] != null && rooms[i].getRoomNo().equalsIgnoreCase(room.getRoomNo())) {
+                rooms[i] = room;
+                break;
+            }
+        }
+        saveAllRooms(rooms);
+    }
 }

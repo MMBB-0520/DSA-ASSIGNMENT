@@ -9,4 +9,5 @@ public interface RoomDAO {
     Room[] getAllRooms();
     void saveAllRooms(Room[] rooms);
     Room getRoomByNo(String roomNo);
+    void saveRoom(Room room);
 }

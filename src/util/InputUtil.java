@@ -1,6 +1,8 @@
 package util;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Scanner;
@@ -8,6 +10,9 @@ import java.util.Scanner;
 /**
  * Utility class for robust console input reading and validation.
  * Encapsulates Scanner interaction, type conversion, and bounds validation (SRP).
+ * Utility Class Constraint: Contains only static variables and static methods.
+ *
+ * @author Ng Yuen Qi
  */
 public class InputUtil {
 
@@ -142,6 +147,69 @@ public class InputUtil {
                 return dt;
             } catch (DateTimeParseException e) {
                 System.out.println("[!] Invalid date format. Use yyyy-MM-dd HH:mm (e.g. 2026-08-20 15:00).");
+            }
+        }
+    }
+
+    public static LocalDate readFutureDate(Scanner scanner, String prompt) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        while (true) {
+            System.out.print(prompt);
+            String str = scanner.nextLine().trim();
+            try {
+                LocalDate date = LocalDate.parse(str, formatter);
+                if (date.isBefore(LocalDate.now())) {
+                    System.out.println("[!] Check-In date cannot be in the past.");
+                    continue;
+                }
+                return date;
+            } catch (DateTimeParseException e) {
+                System.out.println("[!] Invalid date format. Use yyyy-MM-dd (e.g. 2026-08-20).");
+            }
+        }
+    }
+
+    public static LocalTime readTimeMinWithDefault(Scanner scanner, String prompt, LocalTime minTime, LocalTime defaultTime) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+        while (true) {
+            System.out.print(prompt);
+            String str = scanner.nextLine().trim();
+            if (str.isEmpty()) {
+                return defaultTime;
+            }
+            try {
+                LocalTime time = LocalTime.parse(str, formatter);
+                if (time.isBefore(minTime)) {
+                    System.out.printf("[!] Estimated arrival time cannot be before %s.%n", minTime.format(formatter));
+                    continue;
+                }
+                return time;
+            } catch (DateTimeParseException e) {
+                System.out.println("[!] Invalid time format. Use HH:mm (e.g. 14:30 or 15:00) or press Enter for default.");
+            }
+        }
+    }
+
+    public static String readConfirmationNo(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.matches("\\d{8}")) {
+                return input;
+            }
+            System.out.println("[!] Invalid input. Confirmation Number must be exactly 8 digits (e.g. 84920183).");
+        }
+    }
+
+    public static LocalDate readAnyDate(Scanner scanner, String prompt) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        while (true) {
+            System.out.print(prompt);
+            String str = scanner.nextLine().trim();
+            try {
+                return LocalDate.parse(str, formatter);
+            } catch (DateTimeParseException e) {
+                System.out.println("[!] Invalid date format. Use yyyy-MM-dd (e.g. 2026-08-20).");
             }
         }
     }

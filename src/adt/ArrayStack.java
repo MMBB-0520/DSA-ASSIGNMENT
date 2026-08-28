@@ -7,7 +7,6 @@ public class ArrayStack<T> implements StackInterface<T> {
     private int topIndex;
     private static final int DEFAULT_CAPACITY = 25;
 
-    @SuppressWarnings("unchecked")
     public ArrayStack() {
         this(DEFAULT_CAPACITY);
     }

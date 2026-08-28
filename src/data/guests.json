@@ -3,13 +3,13 @@
     "guestId": "G1001",
     "guestName": "Alice Johnson",
     "contactNumber": "0123456789",
-    "icPassport": "950101-14-5566"
+    "icPassport": "950101145566"
   },
   {
     "guestId": "G1003",
     "guestName": "Charlie Tan",
     "contactNumber": "0112233445",
-    "icPassport": "900812-10-1234"
+    "icPassport": "900812101234"
   },
   {
     "guestId": "G1002",
@@ -30,15 +30,57 @@
     "icPassport": "031230145278"
   },
   {
+    "guestId": "G1012",
+    "guestName": "Brian Tan",
+    "contactNumber": "0134567890",
+    "icPassport": "900315102233"
+  },
+  {
+    "guestId": "G1013",
+    "guestName": "Daniel Wong",
+    "contactNumber": "0167890123",
+    "icPassport": "880722147812"
+  },
+  {
+    "guestId": "G1014",
+    "guestName": "Emma Lee",
+    "contactNumber": "0172345678",
+    "icPassport": "950811083421"
+  },
+  {
+    "guestId": "G1010",
+    "guestName": "Michael Lim",
+    "contactNumber": "0183456789",
+    "icPassport": "920204105678"
+  },
+  {
     "guestId": "G1006",
-    "guestName": "abigail",
-    "contactNumber": "014789456",
-    "icPassport": "010220140586"
+    "guestName": "Sophia Martinez",
+    "contactNumber": "0194567890",
+    "icPassport": "910926123456"
   },
   {
     "guestId": "G1007",
-    "guestName": "shafina",
-    "contactNumber": "0147415688",
-    "icPassport": "031225120528"
+    "guestName": "Oliver Smith",
+    "contactNumber": "0126789012",
+    "icPassport": "870514069123"
+  },
+  {
+    "guestId": "G1008",
+    "guestName": "Charlotte Brown",
+    "contactNumber": "0137890123",
+    "icPassport": "960312056789"
+  },
+  {
+    "guestId": "G1009",
+    "guestName": "James Wilson",
+    "contactNumber": "0148901234",
+    "icPassport": "850718142345"
+  },
+  {
+    "guestId": "G1015",
+    "guestName": "Isabella Taylor",
+    "contactNumber": "0159012345",
+    "icPassport": "990421108765"
   }
 ]
