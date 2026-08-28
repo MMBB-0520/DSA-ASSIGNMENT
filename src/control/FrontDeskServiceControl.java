@@ -435,6 +435,7 @@ public class FrontDeskServiceControl {
     /**
      * Pre-requests Late Check-Out for a checked-in guest with optional advance
      * payment collection.
+     * Instantly updates physical room status to the corresponding LATE CHECKOUT tag.
      */
     public boolean requestLateCheckOut(String confirmationNo, int lateOption, double cashTendered) {
         Booking booking = searchByConfirmationNo(confirmationNo);
@@ -449,18 +450,20 @@ public class FrontDeskServiceControl {
         if (cashTendered > 0) {
             bill.setCashTendered(bill.getCashTendered() + cashTendered);
         }
-        if (booking.getRoomNo() != null && !booking.getRoomNo().isEmpty()) {
-            Room[] allRooms = roomDAO.getAllRooms();
-            if (allRooms != null) {
-                for (Room r : allRooms) {
-                    if (r != null && r.getRoomNo().equalsIgnoreCase(booking.getRoomNo())) {
-                        r.setStatus("Dirty (Late Check-Out)");
-                        break;
-                    }
-                }
-                roomDAO.saveAllRooms(allRooms);
-            }
+
+        // Instantly update physical room status to corresponding LATE CHECKOUT tag
+        String lateRoomStatus = switch (lateOption) {
+            case 1 -> Room.STATUS_LATE_30MIN;
+            case 2 -> Room.STATUS_LATE_1HRS;
+            case 3 -> Room.STATUS_LATE_2HRS;
+            default -> Room.STATUS_BOOKED;
+        };
+
+        Room[] allRooms = roomDAO.getAllRooms();
+        if (updateAssignedRoomsStatus(booking, allRooms, lateRoomStatus)) {
+            roomDAO.saveAllRooms(allRooms);
         }
+
         bookingDAO.saveBooking(booking);
         return true;
     }
