@@ -435,8 +435,6 @@ public class FrontDeskServiceControl {
     /**
      * Pre-requests Late Check-Out for a checked-in guest with optional advance
      * payment collection.
-     * Instantly updates physical room status to the corresponding LATE CHECKOUT
-     * tag.
      */
     public boolean requestLateCheckOut(String confirmationNo, int lateOption, double cashTendered) {
         Booking booking = searchByConfirmationNo(confirmationNo);
