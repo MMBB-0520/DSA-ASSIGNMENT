@@ -10,6 +10,9 @@ import java.util.Scanner;
 /**
  * Utility class for robust console input reading and validation.
  * Encapsulates Scanner interaction, type conversion, and bounds validation (SRP).
+ * Utility Class Constraint: Contains only static variables and static methods.
+ *
+ * @author Ng Yuen Qi
  */
 public class InputUtil {
 
@@ -195,6 +198,19 @@ public class InputUtil {
                 return input;
             }
             System.out.println("[!] Invalid input. Confirmation Number must be exactly 8 digits (e.g. 84920183).");
+        }
+    }
+
+    public static LocalDate readAnyDate(Scanner scanner, String prompt) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        while (true) {
+            System.out.print(prompt);
+            String str = scanner.nextLine().trim();
+            try {
+                return LocalDate.parse(str, formatter);
+            } catch (DateTimeParseException e) {
+                System.out.println("[!] Invalid date format. Use yyyy-MM-dd (e.g. 2026-08-20).");
+            }
         }
     }
 }

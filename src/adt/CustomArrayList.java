@@ -1,6 +1,7 @@
 package adt;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 
 public class CustomArrayList<T> implements ListInterface<T> {
@@ -22,7 +23,8 @@ public class CustomArrayList<T> implements ListInterface<T> {
 
     @Override
     public boolean add(int index, T element) {
-        if (index < 0 || index > size) return false;
+        if (index < 0 || index > size)
+            return false;
         if (size == array.length) {
             array = Arrays.copyOf(array, array.length * 2);
         }
@@ -37,13 +39,15 @@ public class CustomArrayList<T> implements ListInterface<T> {
     @Override
     @SuppressWarnings("unchecked")
     public T get(int index) {
-        if (index < 0 || index >= size) return null;
+        if (index < 0 || index >= size)
+            return null;
         return (T) array[index];
     }
 
     @Override
     public boolean set(int index, T element) {
-        if (index < 0 || index >= size) return false;
+        if (index < 0 || index >= size)
+            return false;
         array[index] = element;
         return true;
     }
@@ -51,7 +55,8 @@ public class CustomArrayList<T> implements ListInterface<T> {
     @Override
     @SuppressWarnings("unchecked")
     public T remove(int index) {
-        if (index < 0 || index >= size) return null;
+        if (index < 0 || index >= size)
+            return null;
         T removed = (T) array[index];
         for (int i = index; i < size - 1; i++) {
             array[i] = array[i + 1];
@@ -72,13 +77,15 @@ public class CustomArrayList<T> implements ListInterface<T> {
 
     @Override
     public T removeFirst() {
-        if (isEmpty()) return null;
+        if (isEmpty())
+            return null;
         return remove(0);
     }
 
     @Override
     public T removeLast() {
-        if (isEmpty()) return null;
+        if (isEmpty())
+            return null;
         return remove(size - 1);
     }
 
@@ -99,11 +106,13 @@ public class CustomArrayList<T> implements ListInterface<T> {
     public int indexOf(T element) {
         if (element == null) {
             for (int i = 0; i < size; i++) {
-                if (array[i] == null) return i;
+                if (array[i] == null)
+                    return i;
             }
         } else {
             for (int i = 0; i < size; i++) {
-                if (element.equals(array[i])) return i;
+                if (element.equals(array[i]))
+                    return i;
             }
         }
         return -1;
@@ -148,5 +157,21 @@ public class CustomArrayList<T> implements ListInterface<T> {
                 return (T) array[cursor++];
             }
         };
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void sort(Comparator<T> comparator) {
+        if (size <= 1 || comparator == null)
+            return;
+        for (int i = 1; i < size; i++) {
+            T key = (T) array[i];
+            int j = i - 1;
+            while (j >= 0 && comparator.compare((T) array[j], key) > 0) {
+                array[j + 1] = array[j];
+                j--;
+            }
+            array[j + 1] = key;
+        }
     }
 }

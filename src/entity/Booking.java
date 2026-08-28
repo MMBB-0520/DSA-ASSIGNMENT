@@ -3,6 +3,13 @@ package entity;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
+/**
+ * Booking Entity Class.
+ * Represents a hotel reservation and booking transaction.
+ *
+ * @author Ng Yuen Qi
+ * @author Hu Qiao Feng
+ */
 public class Booking implements Comparable<Booking> {
 
     public static final String STATUS_PENDING = "PENDING";
@@ -35,7 +42,8 @@ public class Booking implements Comparable<Booking> {
     // 8-parameter constructor
     public Booking(String confirmationNo, Guest guest, String roomType, double pricePerNight, int numGuests,
             LocalDateTime checkInDateTime, LocalDateTime checkOutDateTime, LocalDateTime registeredAt) {
-        this(confirmationNo, guest, roomType, pricePerNight, numGuests, 1, checkInDateTime, checkOutDateTime, registeredAt);
+        this(confirmationNo, guest, roomType, pricePerNight, numGuests, 1, checkInDateTime, checkOutDateTime,
+                registeredAt);
     }
 
     public Booking(String confirmationNo, Guest guest, String roomType, double pricePerNight, int numGuests,
@@ -66,7 +74,8 @@ public class Booking implements Comparable<Booking> {
         this.registeredAt = LocalDateTime.now();
         this.pricePerNight = 150.0; // Default fallback price
         this.status = STATUS_PENDING;
-        this.bill = new Bill("INV-" + (confirmationNo != null ? confirmationNo : "00000000"), this.pricePerNight, getNights());
+        this.bill = new Bill("INV-" + (confirmationNo != null ? confirmationNo : "00000000"), this.pricePerNight,
+                getNights());
     }
 
     public Bill getBill() {

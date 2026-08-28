@@ -1,11 +1,15 @@
 package adt;
 
+import java.util.Comparator;
 import java.util.Iterator;
 
 /**
  * Custom Linear List ADT Interface.
  * Defines the abstract operations for a generic ordered list collection.
  *
+ * @author Ng Yuen Qi
+ * @author Hu Qiao Feng
+ * @author Pang Jia Yie
  * @param <T> The type of elements stored in the list.
  */
 public interface ListInterface<T> extends Iterable<T> {
@@ -63,7 +67,7 @@ public interface ListInterface<T> extends Iterable<T> {
      * Replaces the entry at a given position in this list with a new entry.
      *
      * @param givenPosition An integer that specifies the position (1-based).
-     * @param newEntry    The replacement object.
+     * @param newEntry      The replacement object.
      * @return True if replacement is successful, false if position is invalid.
      */
     boolean set(int givenPosition, T newEntry);
@@ -118,6 +122,15 @@ public interface ListInterface<T> extends Iterable<T> {
      * @return An array containing all entries in sequential order.
      */
     Object[] toArray();
+
+    /**
+     * Sorts the entries in this list using the provided Comparator, executing an
+     * in-place sorting algorithm directly on the linear ADT.
+     * [Add-on method: Ng Yuen Qi]
+     *
+     * @param comparator The comparator to determine element ordering.
+     */
+    void sort(Comparator<T> comparator);
 
     /**
      * Gets an iterator for traversing the entries in this list.

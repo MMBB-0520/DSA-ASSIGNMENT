@@ -1,5 +1,11 @@
 package entity;
 
+/**
+ * Room Entity Class.
+ * Represents a hotel room and its operational state.
+ *
+ * @author Ng Yuen Qi
+ */
 public class Room implements Comparable<Room> {
     public static final String STATUS_AVAILABLE = "AVAILABLE";
     public static final String STATUS_BOOKED = "BOOKED";

@@ -5,6 +5,8 @@ package entity;
  * Encapsulates all financial state (rate, nights, charges, deposits, payment
  * status)
  * and provides clean domain calculations without requiring external parameters.
+ *
+ * @author Ng Yuen Qi
  */
 public class Bill {
 

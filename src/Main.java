@@ -4,6 +4,11 @@ import boundary.WalkInRegistrationUI;
 import util.InputUtil;
 import java.util.Scanner;
 
+/**
+ * Main Application Entry Point.
+ *
+ * @author Ng Yuen Qi
+ */
 public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);

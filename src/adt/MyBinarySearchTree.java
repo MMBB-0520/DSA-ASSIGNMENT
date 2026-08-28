@@ -191,26 +191,40 @@ public class MyBinarySearchTree<T extends Comparable<T>> implements BSTInterface
         return 1 + Math.max(getHeightHelper(current.left), getHeightHelper(current.right));
     }
 
+    /**
+     * Rebalances the Binary Search Tree to achieve optimal O(log N) height.
+     * Best Practice Optimization: Rebuilds the balanced tree directly in O(N) time
+     * by linking sub-trees directly from the sorted Inorder array without repeating insert() traversals.
+     * Time Complexity: O(N) (Reduced from O(N log N)).
+     * Space Complexity: O(N) auxiliary for sorted array.
+     */
     @Override
     public void rebalance() {
         if (isEmpty()) {
             return;
         }
         Object[] sortedElements = inorder();
-        clear();
-        buildBalancedTreeHelper(sortedElements, 0, sortedElements.length - 1);
+        int n = sortedElements.length;
+        this.root = buildBalancedTreeDirect(sortedElements, 0, n - 1);
+        this.size = n;
     }
 
-    private void buildBalancedTreeHelper(Object[] elements, int start, int end) {
+    /**
+     * Divide and Conquer helper that constructs a balanced BST directly in O(N) time.
+     * Directly links newNode.left and newNode.right without calling root-to-leaf insert().
+     */
+    private Node buildBalancedTreeDirect(Object[] elements, int start, int end) {
         if (start > end) {
-            return;
+            return null;
         }
         int mid = start + (end - start) / 2;
         @SuppressWarnings("unchecked")
         T midData = (T) elements[mid];
-        insert(midData);
-        buildBalancedTreeHelper(elements, start, mid - 1);
-        buildBalancedTreeHelper(elements, mid + 1, end);
+
+        Node newNode = new Node(midData);
+        newNode.left = buildBalancedTreeDirect(elements, start, mid - 1);
+        newNode.right = buildBalancedTreeDirect(elements, mid + 1, end);
+        return newNode;
     }
 
     @Override

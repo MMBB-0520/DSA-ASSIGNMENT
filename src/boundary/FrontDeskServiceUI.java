@@ -5,10 +5,12 @@ import entity.Bill;
 import entity.Booking;
 import entity.Guest;
 import entity.Room;
+import adt.ListInterface;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Iterator;
 import java.util.Scanner;
 import util.InputUtil;
 
@@ -48,7 +50,7 @@ public class FrontDeskServiceUI {
             System.out.println("[4] Check-Out Processing");
             System.out.println("[5] Cancel Booking & Refund Policy");
             System.out.println("[6] Pre-Request Late Check-Out");
-            System.out.println("[7] ADT & Algorithm Performance Summary");
+            System.out.println("[7] Management Reports & Operational Analytics");
             System.out.println("[0] Return to Main Menu");
             System.out.println(DIVIDER);
             System.out.print("Enter Choice: ");
@@ -62,7 +64,7 @@ public class FrontDeskServiceUI {
                 case 4 -> searchBillAndCheckOutUI();
                 case 5 -> cancelBookingUI();
                 case 6 -> preRequestLateCheckOutUI();
-                case 7 -> showAdtSummary();
+                case 7 -> showReportsMenu();
                 case 0 -> System.out.println("\nReturning to Main Menu...");
                 default -> System.out.println("\nInvalid choice! Please enter a valid menu option.");
             }
@@ -716,66 +718,534 @@ public class FrontDeskServiceUI {
      * using BST getIterator(), getMin(), getMax(), and category aggregations.
      */
     private void showAdtSummary() {
-        System.out.println("\n" + DIVIDER);
-        System.out.println(" ADT & SEARCH ALGORITHM TECHNICAL SUMMARY");
-        System.out.println(DIVIDER);
-        System.out.println(" 1. LINEAR ADT       : adt.ListInterface<Room> -> adt.CustomLinkedList<Room>");
-        System.out.println("    - Purpose        : Dynamic candidate room filtering & pipeline sorting");
-        System.out.println(" 2. NON-LINEAR ADT   : adt.BSTInterface<Booking> -> adt.MyBinarySearchTree<Booking>");
-        System.out.println("    - Variable Type  : Interface Type (BSTInterface) [Best Practice restriction]");
-        System.out.println("    - Node Structure : Internal Node (data, left, right)");
-        System.out.println("    - Iterator       : java.util.Iterator<T> via getIterator()");
-        System.out.println("    - Search Key     : 8-Digit Confirmation Number");
-        System.out.println("    - Time Complexity: O(log n) Average Lookup / O(log n) Average Insertion");
-        System.out.println(" Total Records Count : " + control.getTotalIndexedCount() + " indexed booking(s)");
+        System.out.println("\n=================================================================================");
+        System.out.println("                 TECHNICAL ADT & ALGORITHM PERFORMANCE SUMMARY");
+        System.out.println("=================================================================================");
 
-        System.out.println(DIVIDER);
-        System.out.println(" SYSTEM SUMMARY & ANALYTICS REPORT (Collection ADT Evaluation)");
-        System.out.println(DIVIDER);
-        System.out.printf("  Total Bookings       : %d booking(s)%n", control.getTotalBookingsCount());
-        System.out.printf("  Total System Revenue : RM %.2f%n", control.getGrandTotalRevenue());
-        System.out.printf("  Average Booking Value: RM %.2f%n", control.getAverageRevenuePerBooking());
-        System.out.printf("  Average Stay Duration: %.1f night(s)%n", control.getAverageStayNights());
-        System.out.println(SUB_DIVIDER);
-        System.out.println(" BST BOUNDS & BALANCE METRICS (rebalance() / getMin() / getMax()):");
-        System.out.printf("  - Tree Max Height    : %d level(s) [Divide-and-Conquer Rebalanced]%n",
+        // --------------------------------------------------------------------
+        // PART 1: TECHNICAL ARCHITECTURE (The ADT Specs)
+        // --------------------------------------------------------------------
+        System.out.println(" [ PART 1: ABSTRACT DATA TYPE (ADT) ARCHITECTURE ]");
+        System.out.println(" -------------------------------------------------------------------------------");
+
+        System.out.println(" > LINEAR ADT STRUCTURE");
+        System.out.println("   - Implementation : adt.CustomLinkedList<Room> (with Tail Pointer)");
+        System.out.println("   - Purpose        : Dynamic candidate filtering & pipeline processing");
+        System.out.println("   - Algorithm      : O(1) Insertion, O(1) In-place Sort on Pointers");
+        System.out.println();
+
+        System.out.println(" > NON-LINEAR ADT STRUCTURE");
+        System.out.println("   - Implementation : adt.MyBinarySearchTree<Booking> (via BSTInterface)");
+        System.out.println("   - Node Structure : Internal Node (data, left, right)");
+        System.out.println("   - Search Key     : 8-Digit Confirmation Number");
+        System.out.println("   - Complexity     : O(log n) Average Lookup & Insertion");
+        System.out.println();
+
+        System.out.println(" > BST SEARCH INDEX METRICS");
+        System.out.printf("   - Total Indexed  : %d node(s)%n", control.getTotalIndexedCount());
+        System.out.printf("   - Tree Height    : %d level(s) [Divide-and-Conquer Rebalanced]%n",
                 control.getTreeHeight());
 
         Booking minBooking = control.getMinBooking();
-        if (minBooking != null) {
-            Guest g = minBooking.getGuest();
-            String guestName = (g != null) ? g.getGuestName() : "N/A";
-            System.out.printf("  - Min Confirmation No: %s (%s - RM %.2f)%n",
-                    minBooking.getConfirmationNo(), guestName, minBooking.getBill().getGrandTotal());
-        } else {
-            System.out.println("  - Min Confirmation No: N/A");
-        }
+        String minDesc = (minBooking != null)
+                ? String.format("%s (%s - RM %.2f)", minBooking.getConfirmationNo(),
+                        minBooking.getGuest() != null ? minBooking.getGuest().getGuestName() : "N/A",
+                        minBooking.getBill().getGrandTotal())
+                : "N/A";
+        System.out.println("   - Min Node (Left): " + minDesc);
 
         Booking maxBooking = control.getMaxBooking();
-        if (maxBooking != null) {
-            Guest g = maxBooking.getGuest();
-            String guestName = (g != null) ? g.getGuestName() : "N/A";
-            System.out.printf("  - Max Confirmation No: %s (%s - RM %.2f)%n",
-                    maxBooking.getConfirmationNo(), guestName, maxBooking.getBill().getGrandTotal());
-        } else {
-            System.out.println("  - Max Confirmation No: N/A");
+        String maxDesc = (maxBooking != null)
+                ? String.format("%s (%s - RM %.2f)", maxBooking.getConfirmationNo(),
+                        maxBooking.getGuest() != null ? maxBooking.getGuest().getGuestName() : "N/A",
+                        maxBooking.getBill().getGrandTotal())
+                : "N/A";
+        System.out.println("   - Max Node(Right): " + maxDesc);
+
+        // --------------------------------------------------------------------
+        // PART 2: BUSINESS ANALYTICS (The Aggregated Data)
+        // --------------------------------------------------------------------
+        System.out.println("\n [ PART 2: SYSTEM SUMMARY & BUSINESS ANALYTICS ]");
+        System.out.println(" -------------------------------------------------------------------------------");
+
+        System.out.println(" > FINANCIAL OVERVIEW");
+        System.out.printf("   - Total Bookings Analyzed: %d booking(s)%n", control.getTotalBookingsCount());
+        System.out.printf("   - Total System Revenue   : RM %.2f%n", control.getGrandTotalRevenue());
+        System.out.printf("   - Average Booking Value  : RM %.2f%n", control.getAverageRevenuePerBooking());
+        System.out.printf("   - Average Stay (ALOS)    : %.1f night(s)%n", control.getAverageStayNights());
+        System.out.println();
+
+        System.out.println(" > REVENUE BREAKDOWN BY ROOM TYPE");
+        System.out.printf("   - Standard Rooms : %3d bookings | Revenue: RM %8.2f%n",
+                control.getBookingCountByRoomType("Standard"), control.getRevenueByRoomType("Standard"));
+        System.out.printf("   - Deluxe Rooms   : %3d bookings | Revenue: RM %8.2f%n",
+                control.getBookingCountByRoomType("Deluxe"), control.getRevenueByRoomType("Deluxe"));
+        System.out.printf("   - Suite Rooms    : %3d bookings | Revenue: RM %8.2f%n",
+                control.getBookingCountByRoomType("Suite"), control.getRevenueByRoomType("Suite"));
+        System.out.println();
+
+        System.out.println(" > OPERATIONAL STATUS DISTRIBUTION");
+        System.out.printf("   Confirmed: %-3d | Reserved: %-3d | Pending: %-3d | No-Show: %-3d | Paid: %-3d%n",
+                control.getBookingCountByStatus(Booking.STATUS_CONFIRMED),
+                control.getBookingCountByStatus(Booking.STATUS_RESERVED),
+                control.getBookingCountByStatus(Booking.STATUS_PENDING),
+                control.getBookingCountByStatus(Booking.STATUS_NO_SHOW),
+                control.getPaidBookingCount());
+
+        System.out.println("=================================================================================");
+    }
+
+    private static String generateProgressBar(double percentage, int barLength) {
+        if (Double.isNaN(percentage) || percentage < 0)
+            percentage = 0;
+        if (percentage > 100)
+            percentage = 100;
+        int filled = (int) Math.round((percentage / 100.0) * barLength);
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < barLength; i++) {
+            if (i < filled) {
+                sb.append("#");
+            } else {
+                sb.append("─");
+            }
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    /**
+     * Sub-menu for Management Reports & Operational Analytics.
+     */
+    private void showReportsMenu() {
+        int reportChoice;
+        do {
+            System.out.println("\n" + DIVIDER);
+            System.out.println(" MANAGEMENT REPORTS & OPERATIONAL ANALYTICS");
+            System.out.println(DIVIDER);
+            System.out.println("[1] Report 1: Room Availability & Booking Demand Analysis");
+            System.out.println("[2] Report 2: Daily Arrivals, Departures & In-House Action Report");
+            System.out.println("[3] Technical ADT & BST Algorithm Performance Summary");
+            System.out.println("[0] Return to Front-Desk Menu");
+            System.out.println(DIVIDER);
+
+            reportChoice = InputUtil.readIntInRange(scanner, "Enter Choice [0-3]: ", 0, 3);
+            switch (reportChoice) {
+                case 1 -> generateRoomAvailabilityDemandReportUI();
+                case 2 -> generateDailyArrivalsDeparturesActionReportUI();
+                case 3 -> showAdtSummary();
+                case 0 -> System.out.println("\nReturning to Front-Desk Menu...");
+                default -> System.out.println("\nInvalid choice!");
+            }
+        } while (reportChoice != 0);
+    }
+
+    /**
+     * Report 1 UI: Room Availability & Booking Demand Analysis
+     * Pipeline: Filter -> Search -> Sort -> Analyze -> Management Recommendation
+     */
+    private void generateRoomAvailabilityDemandReportUI() {
+        System.out.println("\n" + SUB_DIVIDER);
+        System.out.println(" REPORT 1: ROOM AVAILABILITY & BOOKING DEMAND ANALYSIS");
+        System.out.println(SUB_DIVIDER);
+
+        // 1. Filter: Select Room Type
+        System.out.println("Select Room Type Filter:");
+        System.out.println(" [1] Deluxe");
+        System.out.println(" [2] Standard");
+        System.out.println(" [3] Suite");
+        System.out.println(" [4] ALL Room Types (Default)");
+        int roomOpt = InputUtil.readIntInRangeWithDefault(scanner, "Enter Choice [1-4] (Default 4): ", 1, 4, 4);
+
+        String roomTypeFilter = switch (roomOpt) {
+            case 1 -> "Deluxe";
+            case 2 -> "Standard";
+            case 3 -> "Suite";
+            default -> "ALL";
+        };
+
+        // 2. Select Date Period Range
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime checkInPeriod = now.toLocalDate().atTime(14, 0);
+        LocalDateTime checkOutPeriod = checkInPeriod.plusDays(7);
+
+        System.out.println("\nSelected Date Analysis Period:");
+        System.out.println(" Default Period: Today (" + checkInPeriod.format(DATETIME_FORMAT) + ") to +7 Days ("
+                + checkOutPeriod.format(DATETIME_FORMAT) + ")");
+        System.out.print("Customize Period? (Y/N, Default N): ");
+        String customAns = scanner.nextLine().trim();
+        if (customAns.equalsIgnoreCase("Y") || customAns.equalsIgnoreCase("YES")) {
+            checkInPeriod = InputUtil.readFutureDateTime(scanner, "Enter Start Check-In Date/Time (yyyy-MM-dd HH:mm): ",
+                    DATETIME_FORMAT);
+            checkOutPeriod = InputUtil.readFutureDateTime(scanner, "Enter End Check-Out Date/Time (yyyy-MM-dd HH:mm): ",
+                    DATETIME_FORMAT);
         }
 
+        // 3. Status Filter
+        System.out.println("\nSelect Room Status Filter:");
+        System.out.println(" [1] AVAILABLE Only (Default)");
+        System.out.println(" [2] ALL Room Statuses");
+        int statusOpt = InputUtil.readIntInRangeWithDefault(scanner, "Enter Choice [1-2] (Default 1): ", 1, 2, 1);
+        String statusFilter = (statusOpt == 2) ? "ALL" : Room.STATUS_AVAILABLE;
+
+        // 4. Sort Options
+        System.out.println("\nSelect Sort Criteria:");
+        System.out.println(" [1] Price per Night (Low to High) [Default]");
+        System.out.println(" [2] Price per Night (High to Low)");
+        System.out.println(" [3] Room Number (Ascending)");
+        int sortOpt = InputUtil.readIntInRangeWithDefault(scanner, "Enter Sort Option [1-3] (Default 1): ", 1, 3, 1);
+
+        String sortBy = switch (sortOpt) {
+            case 2 -> "Price_Desc";
+            case 3 -> "RoomNo_Asc";
+            default -> "Price_Asc";
+        };
+
+        ListInterface<Room> candidateRooms = control.generateRoomAvailabilityDemandReport(
+                roomTypeFilter, checkInPeriod, checkOutPeriod, statusFilter, sortBy);
+
+        // Ask Control layer to calculate occupancy metrics (No business logic/math in
+        // UI)
+        double[] occMetrics = control.calculatePeriodOccupancyMetrics(checkInPeriod, checkOutPeriod);
+        int stdBooked = (int) occMetrics[0], stdTotal = (int) occMetrics[1];
+        double stdOccPct = occMetrics[2];
+        int delBooked = (int) occMetrics[3], delTotal = (int) occMetrics[4];
+        double delOccPct = occMetrics[5];
+        int steBooked = (int) occMetrics[6], steTotal = (int) occMetrics[7];
+        double steOccPct = occMetrics[8];
+        int totalAllBooked = (int) occMetrics[9], totalAllRooms = (int) occMetrics[10];
+        double overallOccPct = occMetrics[11];
+
+        // Ask Control layer to calculate demand target metrics
+        double[] demandMetrics = control.calculateTargetDemandMetrics(roomTypeFilter, occMetrics,
+                candidateRooms.size());
+        int targetPhysicalRooms = (int) demandMetrics[0];
+        int targetActiveBooked = (int) demandMetrics[1];
+        int targetNetAvailable = (int) demandMetrics[2];
+        double demandOccupancyRate = demandMetrics[3];
+
+        String reportTitle = "ROOM AVAILABILITY & BOOKING DEMAND ANALYSIS REPORT";
+        String filterCriteria = "Room Type = " + roomTypeFilter + " | Status = " + statusFilter + " | Sort = " + sortBy
+                + " | Period = " + checkInPeriod.toLocalDate() + " to " + checkOutPeriod.toLocalDate();
+        String executionPipeline = "Candidate Filter -> Period Search -> Insertion Sort";
+        printReportHeader(reportTitle, filterCriteria, executionPipeline);
+
+        System.out.println("\n PERIOD OCCUPANCY & DEMAND VISUALIZER (BAR CHART):");
+        System.out.printf("  Standard : %s %5.1f%% Occupied (%d/%d Booked)%n", generateProgressBar(stdOccPct, 30),
+                stdOccPct, stdBooked, stdTotal);
+        System.out.printf("  Deluxe   : %s %5.1f%% Occupied (%d/%d Booked)%n", generateProgressBar(delOccPct, 30),
+                delOccPct, delBooked, delTotal);
+        System.out.printf("  Suite    : %s %5.1f%% Occupied (%d/%d Booked)%n", generateProgressBar(steOccPct, 30),
+                steOccPct, steBooked, steTotal);
+        System.out.println("  --------------------------------------------------------------------------------------");
+        System.out.printf("  OVERALL  : %s %5.1f%% Occupied (%d/%d Booked)%n\n", generateProgressBar(overallOccPct, 30),
+                overallOccPct, totalAllBooked, totalAllRooms);
         System.out.println(SUB_DIVIDER);
-        System.out.println(" CATEGORY BREAKDOWN BY ROOM TYPE:");
-        System.out.printf("  - Standard Rooms     : %2d booking(s) | Revenue: RM %8.2f%n",
-                control.getBookingCountByRoomType("Standard"), control.getRevenueByRoomType("Standard"));
-        System.out.printf("  - Deluxe Rooms       : %2d booking(s) | Revenue: RM %8.2f%n",
-                control.getBookingCountByRoomType("Deluxe"), control.getRevenueByRoomType("Deluxe"));
-        System.out.printf("  - Suite Rooms        : %2d booking(s) | Revenue: RM %8.2f%n",
-                control.getBookingCountByRoomType("Suite"), control.getRevenueByRoomType("Suite"));
+
+        System.out.println(" PERIOD AVAILABILITY & DEMAND METRICS SUMMARY:");
+        System.out.printf("  - Total Physical Inventory Rooms : %d room(s)%n", targetPhysicalRooms);
+        System.out.printf("  - Active Booked Rooms (Period)   : %d room(s)%n", targetActiveBooked);
+        System.out.printf("  - Net Available Rooms (Period)   : %d room(s)%n", targetNetAvailable);
+        System.out.printf("  - Period Demand Occupancy Rate  : %.1f%%%n", demandOccupancyRate);
         System.out.println(SUB_DIVIDER);
-        System.out.println(" BOOKING STATUS SUMMARY:");
-        System.out.printf("  - Confirmed Bookings : %d%n", control.getBookingCountByStatus(Booking.STATUS_CONFIRMED));
-        System.out.printf("  - Reserved (Future)  : %d%n", control.getBookingCountByStatus(Booking.STATUS_RESERVED));
-        System.out.printf("  - Pending (Queue)    : %d%n", control.getBookingCountByStatus(Booking.STATUS_PENDING));
-        System.out.printf("  - No-Show Bookings   : %d%n", control.getBookingCountByStatus(Booking.STATUS_NO_SHOW));
-        System.out.printf("  - Paid (Cash)        : %d%n", control.getPaidBookingCount());
-        System.out.println(DIVIDER);
+
+        if (candidateRooms.isEmpty()) {
+            System.out.println(" [!] No rooms matched the specified search and filter criteria.");
+            System.out.println(DIVIDER);
+            return;
+        }
+
+        System.out.println(" CANDIDATE ROOMS AVAILABILITY TRAIL (Sorted):");
+        String tableBorder = "┌────┬──────────┬───────────┬────────────────┬──────────────────┐";
+        String tableHeader = "│No. │ Room No  │ Room Type │ Rate/Night(RM) │ Inventory Status │";
+        String tableSep = "├────┼──────────┼───────────┼────────────────┼──────────────────┤";
+        String tableFooter = "└────┴──────────┴───────────┴────────────────┴──────────────────┘";
+
+        System.out.println(tableBorder);
+        System.out.println(tableHeader);
+        System.out.println(tableSep);
+
+        int idx = 1;
+        Iterator<Room> roomIt = candidateRooms.getIterator();
+        while (roomIt != null && roomIt.hasNext()) {
+            Room r = roomIt.next();
+            if (r == null)
+                continue;
+            System.out.printf("│%3d │ %-8s │ %-9s │ %14.2f │ %-16s │%n",
+                    idx++,
+                    r.getRoomNo(),
+                    r.getRoomType(),
+                    r.getPricePerNight(),
+                    r.getStatus());
+        }
+        System.out.println(tableFooter);
+
+        // Ask Control layer for strategic recommendations & top occupied types
+        String[] recommendation = control.generateDemandRecommendation(demandOccupancyRate);
+        System.out.println("MANAGEMENT STRATEGIC RECOMMENDATIONS:");
+        System.out.println(recommendation[0]);
+        System.out.println(recommendation[1]);
+
+        String[] topTypes = control.calculateTopOccupancyAndAvailabilityTypes(stdOccPct, delOccPct, steOccPct);
+        System.out.println(SUB_DIVIDER);
+        System.out.printf(" < Highest Occupancy Room Type : %s (%s%% Occupied) >%n", topTypes[0], topTypes[1]);
+        System.out.printf(" < Highest Available Room Type : %s (%s%% Available) >%n", topTypes[2], topTypes[3]);
+        System.out.println(SUB_DIVIDER);
+        System.out.println("                               END OF THE REPORT");
+        System.out.println("=================================================================================");
+    }
+
+    /**
+     * Report 2 UI: Daily Arrivals, Departures & In-House Operational Action Report
+     * Shift Handover Report: Dynamic Status Classification -> Date Filter ->
+     * Multi-Criteria Sorting -> Action Plan
+     */
+    private void generateDailyArrivalsDeparturesActionReportUI() {
+        System.out.println("\n" + SUB_DIVIDER);
+        System.out.println(" REPORT 2: DAILY ARRIVALS, DEPARTURES & IN-HOUSE ACTION REPORT");
+        System.out.println(SUB_DIVIDER);
+
+        // 1. Shift Target Date Selection (Default: Today)
+        LocalDate shiftDate = LocalDate.now();
+        System.out.println("Target Shift Date: " + shiftDate + " (TODAY)");
+        System.out.print("Customize Target Shift Date? (Y/N, Default N): ");
+        String customAns = scanner.nextLine().trim();
+        if (customAns.equalsIgnoreCase("Y") || customAns.equalsIgnoreCase("YES")) {
+            shiftDate = InputUtil.readAnyDate(scanner, "Enter Target Shift Date (yyyy-MM-dd): ");
+        }
+
+        // 2. Select Operational Status Filter
+        System.out.println("\nSelect Operational Mode Filter:");
+        System.out.println(" [1] ALL Operational Statuses (Default)");
+        System.out.println(" [2] Pending Arrivals (Check-In Due Today)");
+        System.out.println(" [3] Pending Departures (Check-Out Due Today)");
+        System.out.println(" [4] In-House Active Stays");
+        System.out.println(" [5] Overdue / Late Check-Out Alert (!)");
+        int opOpt = InputUtil.readIntInRangeWithDefault(scanner, "Enter Operational Option [1-5] (Default 1): ", 1, 5,
+                1);
+
+        String opModeFilter = switch (opOpt) {
+            case 2 -> "ARRIVALS_DUE";
+            case 3 -> "DEPARTURES_DUE";
+            case 4 -> "IN_HOUSE_STAY";
+            case 5 -> "OVERDUE_ALERT";
+            default -> "ALL";
+        };
+
+        // 3. Room Type Filter
+        System.out.println("\nSelect Room Type Filter:");
+        System.out.println(" [1] ALL Room Types (Default)");
+        System.out.println(" [2] Suite");
+        System.out.println(" [3] Deluxe");
+        System.out.println(" [4] Standard");
+        int roomTypeOpt = InputUtil.readIntInRangeWithDefault(scanner, "Enter Room Type Option [1-4] (Default 1): ", 1,
+                4, 1);
+
+        String roomTypeFilter = switch (roomTypeOpt) {
+            case 2 -> "Suite";
+            case 3 -> "Deluxe";
+            case 4 -> "Standard";
+            default -> "ALL";
+        };
+
+        // 4. Select Sort Option
+        System.out.println("\nSelect Sort Criteria:");
+        System.out.println(" [1] Guest Name (Alphabetical A-Z) [Default]");
+        System.out.println(" [2] Scheduled Check-In Time (Earliest First)");
+        System.out.println(" [3] Scheduled Check-Out Time (Earliest First)");
+        System.out.println(" [4] Confirmation Number");
+        System.out.println(" [5] Room Number (Ascending)");
+        int sortOpt = InputUtil.readIntInRangeWithDefault(scanner, "Enter Sort Option [1-5] (Default 1): ", 1, 5, 1);
+
+        String sortBy = switch (sortOpt) {
+            case 2 -> "Date_Asc";
+            case 3 -> "CheckOut_Asc";
+            case 4 -> "ConfirmationNo";
+            case 5 -> "RoomNo_Asc";
+            default -> "GuestName_Asc";
+        };
+
+        ListInterface<Booking> reportBookings = control.generateDailyOperationalActionReport(
+                shiftDate, opModeFilter, roomTypeFilter, sortBy);
+
+        // Ask Control layer to calculate operational shift metrics (No business math in
+        // UI)
+        double[] opMetrics = control.calculateOperationalActionMetrics(reportBookings, shiftDate);
+        int totalCount = (int) opMetrics[0];
+        int pendingArrivals = (int) opMetrics[1];
+        int pendingDepartures = (int) opMetrics[2];
+        int inHouseStays = (int) opMetrics[3];
+        int overdueLateCheckouts = (int) opMetrics[4];
+
+        String sampleBannerSep = "===============================================================================================================================";
+        String sampleDashSep = "───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────";
+
+        String reportTitle = "DAILY ARRIVALS, DEPARTURES & IN-HOUSE ACTION REPORT";
+        String filterCriteria = "Shift Date = " + shiftDate + " | Mode = " + opModeFilter + " | Room Type = "
+                + roomTypeFilter + " | Sort = " + sortBy;
+        String executionPipeline = "Dynamic Status Classification -> Linear ADT Filter -> CustomLinkedList Sort";
+        printReportHeader(reportTitle, filterCriteria, executionPipeline);
+
+        if (totalCount == 0) {
+            System.out.println(" [!] No operational bookings matched the specified shift criteria.");
+            System.out.println(sampleBannerSep);
+            System.out.println("                                         END OF THE REPORT");
+            System.out.println(sampleBannerSep);
+            return;
+        }
+
+        // Output Data Table matching TAR UMT sample with Receptionist Focus: Contact
+        // No, Room No, Room Type, Shift Schedule, Balance / Status, Action Status
+        String tableBorder = "┌──────────┬──────────────────────┬──────────────┬──────────┬────────┬────────────────┬──────────────────┬───────────────────┐";
+        String tableHeader = "│ Conf. No │ Guest Name           │ Contact No   │ Room No  │ Type   │ Shift Schedule │ Balance/Payment  │ Action Status     │";
+        String tableSep = "├──────────┼──────────────────────┼──────────────┼──────────┼────────┼────────────────┼──────────────────┼───────────────────┤";
+        String tableFooter = "└──────────┴──────────────────────┴──────────────┴──────────┴────────┴────────────────┴──────────────────┴───────────────────┘";
+
+        System.out.println(tableBorder);
+        System.out.println(tableHeader);
+        System.out.println(tableSep);
+
+        Iterator<Booking> printIt = reportBookings.getIterator();
+        while (printIt != null && printIt.hasNext()) {
+            Booking b = printIt.next();
+            if (b == null)
+                continue;
+
+            String gName = (b.getGuest() != null && b.getGuest().getGuestName() != null)
+                    ? b.getGuest().getGuestName()
+                    : "N/A";
+            if (gName.length() > 20)
+                gName = gName.substring(0, 17) + "...";
+
+            String contactNo = control.getGuestContactNumber(b);
+            if (contactNo.length() > 12)
+                contactNo = contactNo.substring(0, 12);
+
+            String roomNo = (b.getRoomNo() != null && !b.getRoomNo().isEmpty()) ? b.getRoomNo() : "Unassigned";
+            if (roomNo.length() > 8)
+                roomNo = roomNo.substring(0, 6) + "..";
+
+            String rType = (b.getRoomType() != null) ? b.getRoomType() : "N/A";
+            if ("Standard".equalsIgnoreCase(rType))
+                rType = "Std";
+            if (rType.length() > 6)
+                rType = rType.substring(0, 6);
+
+            String timeSched = control.getBookingShiftTimeSummary(b, shiftDate);
+
+            String payBalanceTag = control.getBookingPaymentBalanceTag(b);
+            if (payBalanceTag.length() > 16)
+                payBalanceTag = payBalanceTag.substring(0, 16);
+
+            String actionTag = control.getBookingOperationalActionTag(b, shiftDate);
+
+            System.out.printf("│ %-8s │ %-20s │ %-12s │ %-8s │ %-6s │ %-14s │ %-16s │ %-17s │%n", b.getConfirmationNo(),
+                    gName,
+                    contactNo,
+                    roomNo,
+                    rType,
+                    timeSched,
+                    payBalanceTag,
+                    actionTag);
+        }
+        System.out.println(tableFooter);
+
+        // Section Summary Metrics
+        double totalBalanceDue = (opMetrics.length > 5) ? opMetrics[5] : 0.0;
+        System.out.printf("Total shift bookings analyzed        : %d%n", totalCount);
+        System.out.printf("Total pending arrivals (Check-In)    : %d%n", pendingArrivals);
+        System.out.printf("Total pending departures (Check-Out) : %d%n", pendingDepartures);
+        System.out.printf("Total active in-house stays          : %d%n", inHouseStays);
+        System.out.printf("Total overdue / late check-out alert : %d%n", overdueLateCheckouts);
+        System.out.printf("Total shift balance outstanding      : RM %.2f%n", totalBalanceDue);
+        System.out.println(sampleDashSep);
+
+        // Vertical ASCII Histogram / Bar Chart Visualizer (Exact TAR UMT Sample Chart
+        // Style)
+        renderVerticalHistogram(pendingArrivals, pendingDepartures, inHouseStays, overdueLateCheckouts);
+        System.out.println(sampleDashSep);
+
+        // TAR UMT Highlight Summary Block (Max / Min Summary)
+        renderTarumtHighlights(pendingArrivals, pendingDepartures, inHouseStays, overdueLateCheckouts);
+        System.out.println(sampleDashSep);
+
+        // Ask Control layer for Operational Recommendations
+        String[] recommendation = control.generateOperationalActionRecommendation(opMetrics);
+        System.out.println("FRONT-DESK SHIFT HANDOVER ACTION PLAN:");
+        System.out.println(recommendation[0]);
+        System.out.println(recommendation[1]);
+
+        System.out.println(sampleDashSep);
+        System.out.println("                                         END OF THE REPORT");
+        System.out.println(sampleBannerSep);
+    }
+
+    /**
+     * Renders a Vertical ASCII Histogram / Bar Chart matching the TAR UMT sample
+     * report format.
+     */
+    private static void renderVerticalHistogram(int arrivals, int departures, int inHouse, int overdue) {
+        int maxVal = Math.max(arrivals, Math.max(departures, Math.max(inHouse, overdue)));
+        if (maxVal == 0)
+            maxVal = 1;
+
+        int step = Math.max(1, (int) Math.ceil((double) maxVal / 5.0));
+        int topY = step * 5;
+
+        System.out.println("No of bookings");
+        for (int y = topY; y >= step; y -= step) {
+            String arrChar = (arrivals >= y) ? "*" : " ";
+            String depChar = (departures >= y) ? "*" : " ";
+            String inhChar = (inHouse >= y) ? "*" : " ";
+            String ovdChar = (overdue >= y) ? "*" : " ";
+            System.out.printf("%2d │         %s                 %s                  %s                   %s%n", y,
+                    arrChar,
+                    depChar, inhChar,
+                    ovdChar);
+        }
+        System.out.println(
+                " ──┼──────────────────┴──────────────────┴──────────────────┴──────────────────┴───> Operational Statuses");
+        System.out.println("         Arrivals          Departures          In-House            Overdue");
+    }
+
+    /**
+     * Renders TAR UMT Highlight Summary blocks (Status with most / least bookings).
+     */
+    private static void renderTarumtHighlights(int arrivals, int departures, int inHouse, int overdue) {
+        String[] labels = { "Pending Arrivals (Check-In)", "Pending Departures (Check-Out)", "In-House Active Stays",
+                "Overdue / Late Check-Out Alert" };
+        int[] values = { arrivals, departures, inHouse, overdue };
+
+        int maxIdx = 0;
+        int minIdx = 0;
+        for (int i = 1; i < values.length; i++) {
+            if (values[i] > values[maxIdx])
+                maxIdx = i;
+            if (values[i] < values[minIdx])
+                minIdx = i;
+        }
+
+        System.out.println("Operational status with the most bookings (" + values[maxIdx] + "):");
+        System.out.println("< " + labels[maxIdx] + " >");
+        System.out.println();
+        System.out.println("Operational status with the least bookings (" + values[minIdx] + "):");
+        System.out.println("< " + labels[minIdx] + " >");
+    }
+
+    /**
+     * Prints a unified TAR UMT Report Header across all management reports.
+     */
+    private void printReportHeader(String reportTitle, String filterCriteria, String executionPipeline) {
+        System.out.println(
+                "\n===============================================================================================================================");
+        System.out.println("                              TUNKU ABDUL RAHMAN UNIVERSITY OF MANAGEMENT AND TECHNOLOGY");
+        System.out.println("                                           FRONT-DESK MANAGEMENT SUBSYSTEM");
+        System.out.println(
+                "───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────");
+        System.out.println(" REPORT : " + reportTitle);
+        System.out.println(" DATE   : " + LocalDateTime.now().format(DATETIME_FORMAT));
+        System.out.println(" FILTER : " + filterCriteria);
+        System.out.println(" LOGIC  : " + executionPipeline);
+        System.out.println(
+                "===============================================================================================================================");
     }
 }
