@@ -20,7 +20,8 @@ public class RoomTaskLog {
         this(roomId, "Standard", previousStatus, newStatus, staffId, 30);
     }
 
-    public RoomTaskLog(String roomId, String roomType, String previousStatus, String newStatus, String staffId, int estimatedDurationMinutes) {
+    public RoomTaskLog(String roomId, String roomType, String previousStatus, String newStatus, String staffId,
+            int estimatedDurationMinutes) {
         this.roomId = roomId;
         this.roomType = roomType != null ? roomType : "Standard";
         this.previousStatus = previousStatus;
@@ -51,9 +52,11 @@ public class RoomTaskLog {
     public String getNewStatus() {
         return newStatus;
     }
+
     public void setNewStatus(String newStatus) {
         this.newStatus = newStatus;
     }
+
     public void setPreviousStatus(String previousStatus) {
         this.previousStatus = previousStatus;
     }
@@ -62,11 +65,21 @@ public class RoomTaskLog {
         return staffId;
     }
 
-    public long getStartTime() { return startTime; }
-    public void setStartTime(long startTime) { this.startTime = startTime; }
-    
-    public long getEndTime() { return endTime; }
-    public void setEndTime(long endTime) { this.endTime = endTime; }
+    public long getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
+    }
+
+    public long getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(long endTime) {
+        this.endTime = endTime;
+    }
 
     public int getEstimatedDurationMinutes() {
         return estimatedDurationMinutes;
@@ -85,21 +98,56 @@ public class RoomTaskLog {
     }
 
     public long getExpectedEndTimeMillis() {
-        if (startTime == 0) return 0;
+        if (startTime == 0)
+            return 0;
         return startTime + (estimatedDurationMinutes * 60 * 1000L);
     }
 
     public String getFormattedTime(long timeMillis) {
-        if (timeMillis == 0) return "In Progress";
+        if (timeMillis == 0)
+            return "In Progress";
         LocalDateTime dt = LocalDateTime.ofInstant(Instant.ofEpochMilli(timeMillis), ZoneId.systemDefault());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss a");
         return dt.format(formatter);
     }
 
+    public long getActualDurationMinutes() {
+        if (startTime == 0)
+            return 0;
+        long end = (endTime == 0) ? System.currentTimeMillis() : endTime;
+        return Math.max(0, (end - startTime) / (60 * 1000L));
+    }
+
+    public boolean isOverdue() {
+        if (endTime == 0) {
+            return getActualDurationMinutes() > estimatedDurationMinutes;
+        }
+        return getActualDurationMinutes() > estimatedDurationMinutes || penaltyFine > 0;
+    }
+
+    public boolean isInspectionLog() {
+        if (newStatus == null)
+            return false;
+        String s = newStatus.toLowerCase();
+        return s.contains("inspected");
+    }
+
+    public boolean isInspectionPassed() {
+        if (newStatus == null)
+            return false;
+        return newStatus.equalsIgnoreCase("Inspected") || newStatus.equalsIgnoreCase("Ready for Check-In");
+    }
+
+    public boolean isInspectionFailed() {
+        if (newStatus == null)
+            return false;
+        return newStatus.toLowerCase().contains("failed") || newStatus.equalsIgnoreCase("dirty");
+    }
+
     @Override
     public String toString() {
-        return String.format("[Start: %s | End: %s | Est: %d mins] Room: %-5s (%s) | %-20s -> %-20s | Staff: %s", 
-                getFormattedTime(startTime), getFormattedTime(endTime), estimatedDurationMinutes, roomId, roomType, previousStatus, newStatus, staffId);
+        return String.format("[Start: %s | End: %s | Est: %d mins] Room: %-5s (%s) | %-20s -> %-20s | Staff: %s",
+                getFormattedTime(startTime), getFormattedTime(endTime), estimatedDurationMinutes, roomId, roomType,
+                previousStatus, newStatus, staffId);
     }
 }
-

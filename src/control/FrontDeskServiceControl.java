@@ -347,6 +347,18 @@ public class FrontDeskServiceControl {
         if (cashTendered > 0) {
             bill.setCashTendered(bill.getCashTendered() + cashTendered);
         }
+        if (booking.getRoomNo() != null && !booking.getRoomNo().isEmpty()) {
+            Room[] allRooms = roomDAO.getAllRooms();
+            if (allRooms != null) {
+                for (Room r : allRooms) {
+                    if (r != null && r.getRoomNo().equalsIgnoreCase(booking.getRoomNo())) {
+                        r.setStatus("Dirty (Late Check-Out)");
+                        break;
+                    }
+                }
+                roomDAO.saveAllRooms(allRooms);
+            }
+        }
         bookingDAO.saveBooking(booking);
         return true;
     }

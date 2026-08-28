@@ -3,19 +3,19 @@
     "roomNo": "101",
     "roomType": "Standard",
     "pricePerNight": 150.0,
-    "status": "AVAILABLE"
+    "status": "INSPECTED"
   },
   {
     "roomNo": "102",
     "roomType": "Standard",
     "pricePerNight": 150.0,
-    "status": "INSPECTED"
+    "status": "Cleaned"
   },
   {
     "roomNo": "103",
     "roomType": "Standard",
     "pricePerNight": 160.0,
-    "status": "AVAILABLE"
+    "status": "LATE (4HRS)"
   },
   {
     "roomNo": "104",
@@ -27,7 +27,7 @@
     "roomNo": "105",
     "roomType": "Standard",
     "pricePerNight": 150.0,
-    "status": "Cleaning In Progress"
+    "status": "Cleaned"
   },
   {
     "roomNo": "106",
@@ -87,7 +87,7 @@
     "roomNo": "205",
     "roomType": "Deluxe",
     "pricePerNight": 300.0,
-    "status": "AVAILABLE"
+    "status": "Cleaned"
   },
   {
     "roomNo": "206",
@@ -135,7 +135,7 @@
     "roomNo": "303",
     "roomType": "Suite",
     "pricePerNight": 450.0,
-    "status": "BOOKED"
+    "status": "Dirty"
   },
   {
     "roomNo": "304",

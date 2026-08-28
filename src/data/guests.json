@@ -28,5 +28,17 @@
     "guestName": "Sabrina",
     "contactNumber": "0147435699",
     "icPassport": "031230145278"
+  },
+  {
+    "guestId": "G1006",
+    "guestName": "abigail",
+    "contactNumber": "014789456",
+    "icPassport": "010220140586"
+  },
+  {
+    "guestId": "G1007",
+    "guestName": "shafina",
+    "contactNumber": "0147415688",
+    "icPassport": "031225120528"
   }
 ]
