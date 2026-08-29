@@ -209,6 +209,20 @@ public class Booking implements Comparable<Booking> {
     }
 
     /**
+     * Generates a unique 8-digit confirmation number format (e.g., 84920183).
+     */
+    public static String generateConfirmationNo() {
+        return String.format("%08d", (int) (Math.random() * 90000000) + 10000000);
+    }
+
+    /**
+     * Validates whether a confirmation number matches the required 8-digit format.
+     */
+    public static boolean isValidConfirmationNo(String confirmationNo) {
+        return confirmationNo != null && confirmationNo.matches("\\d{8}");
+    }
+
+    /**
      * Determines late check-out option automatically
      */
     public int determineLateCheckOutOption() {

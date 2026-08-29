@@ -310,8 +310,7 @@ public class FrontDeskServiceControl {
 
         String confirmationNo;
         do {
-            // Generate a unique 8-digit confirmation number to serve as the BST search key
-            confirmationNo = String.format("%08d", (int) (Math.random() * 90000000) + 10000000);
+            confirmationNo = Booking.generateConfirmationNo();
         } while (containsConfirmationNo(confirmationNo));
 
         Booking booking = new Booking(confirmationNo, guest, roomType, pricePerNight, numGuests, numOfRooms, checkIn,
